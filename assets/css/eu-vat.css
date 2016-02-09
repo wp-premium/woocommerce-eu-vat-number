@@ -1,0 +1,10 @@
+.woocommerce #payment .location_confirmation,
+.woocommerce-page #payment .location_confirmation {
+	margin-right: 0;
+	padding-right: 0;
+}
+.woocommerce #payment .location_confirmation input,
+.woocommerce-page #payment .location_confirmation input {
+		margin-right: 0;
+	padding-right: 0;
+}
