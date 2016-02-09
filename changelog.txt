@@ -1,0 +1,130 @@
+*** EU VAT Number Changelog ***
+
+2015.09.21 - version 2.1.9
+* Add VAT number field to My Account page
+* Add Switzerland to list of VAT countries
+
+2015.08.06 - version 2.1.8
+* run vat_number_is_valid if the cached result was 0 or false.
+
+2015.03.12 - version 2.1.7
+* Add report for non-eu VAT taxes in the same format as the EU VAT report. Useful for accounting.
+
+2015.03.12 - version 2.1.6
+* Fix report ranges.
+
+2015.03.12 - version 2.1.5
+* Fix textdomain
+
+2015.03.08 - version 2.1.4
+* Textdomain and POT update.
+
+2015.01.08 - version 2.1.3
+* Fix localisation support.
+* Tweaked what data gets saved when dealing with regular products to avoid showing IP info when not required.
+
+2015.01.08 - version 2.1.2
+* Set excemption regardless of base country (maybe_set_vat_excempt method).
+
+2015.01.01 - version 2.1.1
+* Updated geolocation class for CloudFlare support.
+* When dealing with digital goods, validate users who state that they are outside of the EU, if the IP address is inside the EU.
+* Fix options when saving other tax settings.
+
+2014.12.30 - version 2.1.0
+* Added new geolocation class with more reliable GeoIP functionality.
+* Only collect IP when dealing with digital goods in the cart.
+* Force total refresh so checkbox is displayed.
+
+2014.10.28 - version 2.0.0
+* Refactored the plugin.
+* Added additonal options for handling of orders with non-validated VAT numbers.
+* Added IP validation option for orders with digital goods (in preperation for the EU place of supply laws in January).
+* Changed the placement and look and feel of the VAT Number field to make it fit within the WC billing section.
+* Made the VAT ID append itself to formatted billing addresses automatically.
+* Added template file to control the display of the field itself.
+* Added new meta box for viewing collected information.
+* Added column in orders panel to show IP/VAT/other evidence.
+* Added reports for EC Sales and EU Vat taxes.
+* Mixed carts - force digital goods to use taxable billing address (must use tax class named 'Digital Goods')
+* Added requirement for WC 2.2.9 to support the EU VAT rates.
+
+2014.09.01 - version 1.7.2
+* Handle SERVER_BUSY responses.
+* Use transient instead of wp_cache.
+
+2014.09.01 - version 1.7.1
+* Base excemption on configured tax address in tax settings.
+
+2014.06.10 - version 1.7.0
+* Croatia
+* Set meta data when validated, so times when the API fails can be tracked.
+
+2014.04.02 - version 1.6.0
+* Use our own woo api
+
+2014.02.23 - version 1.5.9
+* Option to store unvalidated numbers as-is
+
+2014.02.14 - version 1.5.8
+* Only add errors when you press the checkout process button
+
+2014.02.14 - version 1.5.7
+* Fix notices after success
+
+2014.02.13 - version 1.5.6
+* Clear notices before adding new ones
+
+2014.01.17 - version 1.5.5
+* 2.1 Compat
+
+2013.08.07 - version 1.5.4
+* Pass saved strings though __()
+
+2013.03.15 - version 1.5.3
+* Greece uses EL instead of GR
+
+2013.03.15 - version 1.5.1
+* Update on change field
+
+2013.01.11 - version 1.5.0
+* WC 2.0 Compat
+* General cleanup
+
+2012.12.04 - version 1.4.1
+* New updater
+
+2012.04.10 - version 1.4
+* Added option to optionally deduct tax for shop base country if a valid number is added
+
+2012.04.10 - version 1.3
+* Option to show field when the customer is in the base country
+* Handling for if isvat service is down - allow vat number through.
+
+2012.03.11 - version 1.2.2
+* Add inline JS for scripts
+
+2012.03.01 - version 1.2.1
+* Fixed check after removing the number
+* Remove full stops from number
+
+2012.01.26 - version 1.2
+* WC 1.4 Compatibility
+* Added Woo Updater
+
+2011.11.15 - version 1.1.1
+* Changed textdomain
+
+1.1
+* Renamed plugin since exempt is not the correct terminology
+* Show/hide VAT Number form based on country
+* If user is in the same country then don't allow zero rate
+* VAT Number added to emails
+
+2011.10.26 - version 1.0.1
+* Added form-row-wide class
+* Added heading + option for title
+* Moved to shipping column, below order details
+
+2011.09.27 - version 1.0
+* First Release
