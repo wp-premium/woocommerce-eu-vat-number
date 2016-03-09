@@ -1,5 +1,10 @@
 *** EU VAT Number Changelog ***
 
+2016.03.02 - version 2.1.10
+* Fix incorrect IP address to display when IP is validated. This change also
+  introduces `wc_eu_vat_self_declared_ip_address` hook to filter the IP
+  address.
+
 2015.09.21 - version 2.1.9
 * Add VAT number field to My Account page
 * Add Switzerland to list of VAT countries
