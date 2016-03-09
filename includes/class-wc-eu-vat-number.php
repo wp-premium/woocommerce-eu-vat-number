@@ -232,7 +232,7 @@ class WC_EU_VAT_Number {
 			self::validate_ip();
 
 			if ( self::is_self_declaration_required( self::$ip_country, WC()->customer->get_country() ) && empty( $_POST['location_confirmation'] ) ) {
-				$ip_address     = WC_Geolocation::get_external_ip_address();
+				$ip_address = apply_filters( 'wc_eu_vat_self_declared_ip_address', WC_Geolocation::get_ip_address() );
 
 				wc_add_notice( sprintf( __( 'Your IP Address (%s) does not match your billing country (%s). European VAT laws require your IP address to match your billing country when purchasing digital goods in the EU. Please confirm you are located within your billing country using the checkbox below.', 'woocommerce-eu-vat-number' ), $ip_address, WC()->customer->get_country() ), 'error' );
 
