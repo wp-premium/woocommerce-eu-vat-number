@@ -334,7 +334,7 @@ class WC_EU_VAT_Number {
 	 */
 	public static function update_user_meta( $user_id ) {
 		if ( $user_id && self::$vat_number ) {
-			update_user_meta( $user_id, 'vat_number', self::$vat_number, true );
+			update_user_meta( $user_id, 'vat_number', self::$vat_number );
 		}
 	}
 
