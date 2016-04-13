@@ -1,5 +1,10 @@
 *** EU VAT Number Changelog ***
 
+2016.04.13 - version 2.1.11
+* Fix issue where VAT number is not saved to user meta after checkout
+* Fix issue of missing text domain in plugin header
+* Tweak - Added filter to alter translation file location
+
 2016.03.02 - version 2.1.10
 * Fix incorrect IP address to display when IP is validated. This change also
   introduces `wc_eu_vat_self_declared_ip_address` hook to filter the IP
