@@ -11,9 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 ?>
+
+<?php if ( $show_title ) : ?>
 <header class="title">
 	<h3><?php _e( 'VAT Number', 'woocommerce-eu-vat-number' ); ?></h3>
 </header>
+<?php endif; ?>
+
 <form method="post">
 	<p class="form-row form-row form-row-first">
 		<input type="text" value="<?php echo esc_attr( $vat_number ); ?>" id="vat_number" name="vat_number" class="input-text" />
