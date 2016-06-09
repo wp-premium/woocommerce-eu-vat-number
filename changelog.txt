@@ -1,5 +1,9 @@
 *** EU VAT Number Changelog ***
 
+2016.06.09 - version 2.1.12
+* Tweak - Support for tabbed My Account page introduced in WooCommerce 2.6
+* Tweak - Include VAT Number in order endpoints responses within REST API
+
 2016.04.13 - version 2.1.11
 * Fix issue where VAT number is not saved to user meta after checkout
 * Fix issue of missing text domain in plugin header

@@ -54,6 +54,10 @@ class WC_EU_VAT_Number {
 
 		// Digital goods taxable location
 		add_filter( 'woocommerce_get_tax_location', array( __CLASS__, 'woocommerce_get_tax_location' ), 10, 2 );
+
+		// Add VAT Number in order endpoint (REST API).
+		add_filter( 'woocommerce_api_order_response', array( __CLASS__, 'add_vat_number_to_order_response' ) );
+		add_filter( 'woocommerce_rest_prepare_shop_order', array( __CLASS__, 'add_vat_number_to_order_response' ) );
     }
 
     /**
@@ -452,6 +456,27 @@ class WC_EU_VAT_Number {
 			);
 		}
 		return $location;
+	}
+
+	/**
+	 * Add VAT Number to order endpoint response.
+	 *
+	 * @since 2.1.12
+	 *
+	 * @param WP_REST_Response $response The response object
+	 *
+	 * @return WP_REST_Response The response object with VAT number
+	 */
+	public static function add_vat_number_to_order_response( $response ) {
+		if ( is_a( $response, 'WP_REST_Response' ) ) {
+			// WC 2.6
+			$response->data['vat_number'] = get_post_meta( $response->data['id'], '_vat_number', true );
+		} else if ( is_array( $response ) && ! empty( $response['id'] ) ) {
+			// Legacy endpoint.
+			$response['vat_number'] = get_post_meta( $response['id'], '_vat_number', true );
+		}
+
+		return $response;
 	}
 }
 
