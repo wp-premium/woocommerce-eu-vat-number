@@ -1,5 +1,9 @@
 *** EU VAT Number Changelog ***
 
+2016.10.08 - version 2.1.13
+* Fix - Issue where My Account endpoint doesn't initially work after activation.
+* Fix - Issue where my VAT number is cleared when billing country is changed.
+
 2016.06.09 - version 2.1.12
 * Tweak - Support for tabbed My Account page introduced in WooCommerce 2.6
 * Tweak - Include VAT Number in order endpoints responses within REST API
