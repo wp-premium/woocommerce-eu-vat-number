@@ -7,7 +7,6 @@ jQuery(function(){
 			jQuery('#woocommerce_eu_vat_number').fadeIn();
 		} else {
 			jQuery('#woocommerce_eu_vat_number').fadeOut();
-			jQuery('#woocommerce_eu_vat_number input').val('');
 		}
 	});
 	jQuery('select#billing_country').change();
