@@ -154,7 +154,7 @@ class WC_EU_VAT_Number {
 
 		if ( empty( $cached_result ) ) {
 
-			$response = wp_remote_get( self::$validation_api_url . $vat_prefix . '/' . $vat_number . '/' );
+			$response = wp_remote_get( self::$validation_api_url . $vat_prefix . '/' . $vat_number . '/', array( 'timeout' => 30 ) );
 
 			if ( is_wp_error( $response ) ) {
 				return new WP_Error( 'api', sprintf( __( 'VAT API Error: %s', 'woocommerce-eu-vat-number' ), $response->get_error_message() ) );

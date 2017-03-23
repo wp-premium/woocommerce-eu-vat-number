@@ -1,5 +1,8 @@
 *** EU VAT Number Changelog ***
 
+2017.01.25 - version 2.1.14
+* Fix - Increase validation request timeout from 5 to 30 seconds.
+
 2016.10.08 - version 2.1.13
 * Fix - Issue where My Account endpoint doesn't initially work after activation.
 * Fix - Issue where my VAT number is cleared when billing country is changed.
