@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce EU VAT Number
 Plugin URI: http://www.woothemes.com/products/eu-vat-number/
 Description: The EU VAT Number extension lets you collect and validate EU VAT numbers during checkout to identify B2B transactions verses B2C. IP Addresses can also be validated to ensure they match the billing address. EU businesses with a valid VAT number can have their VAT removed prior to payment.
-Version: 2.1.13
+Version: 2.1.14
 Author: WooThemes
 Author URI: http://woothemes.com/
 Text Domain: woocommerce-eu-vat-number
@@ -11,7 +11,7 @@ Domain Path: /languages
 Requires at least: 4.0
 Tested up to: 4.1
 
-	Copyright: © 2009-2014 WooThemes.
+	Copyright: © 2009-2017 WooThemes.
 	License: GNU General Public License v3.0
 	License URI: http://www.gnu.org/licenses/gpl-3.0.html
 */
