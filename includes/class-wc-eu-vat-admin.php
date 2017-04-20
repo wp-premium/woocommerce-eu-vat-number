@@ -1,85 +1,115 @@
 <?php
+/**
+ * Admin handling.
+ *
+ * @package woocommerce-eu-vat-number
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * WC_EU_VAT_Admin class
+ * WC_EU_VAT_Admin class.
  */
 class WC_EU_VAT_Admin {
 
-	/** Stores settings @var array */
-	private static $settings                    = array();
+	/**
+	 * Admin settings array.
+	 *
+	 * @var array
+	 */
+	private static $settings = array();
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 */
 	public static function init() {
 		self::$settings = include( 'data/eu-vat-number-settings.php' );
-
-		add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
-
 		add_action( 'woocommerce_admin_billing_fields', array( __CLASS__, 'admin_billing_fields' ) );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ), 30 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'styles' ) );
-		add_action( 'woocommerce_process_shop_order_meta', 'WC_EU_VAT_Admin::save', 50, 2 );
-
-		// Settings
 		add_action( 'woocommerce_settings_tax_options_end', array( __CLASS__, 'admin_settings' ) );
 		add_action( 'woocommerce_update_options_tax', array( __CLASS__, 'save_admin_settings' ) );
-
-		// Columns
 		add_filter( 'manage_edit-shop_order_columns', array( __CLASS__, 'add_column' ), 20 );
 		add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'show_column' ), 5, 2 );
 	}
 
 	/**
-	 * Admin notices
-	 */
-	public static function admin_notices() {
-		if ( version_compare( WOOCOMMERCE_VERSION, '2.2.9', '<' ) ) {
-			echo '<div class="error fade"><p>' . __( 'WooCommerce EU VAT Numbers Requries WooCommerce 2.2.9 - please update as soon as possible.', 'woocommerce-eu-vat-number' ) . '</p></div>' . "\n";
-		}
-	}
-
-	/**
-	 * Save meta box data
-	 */
-	public static function save( $post_id, $post ) {
-		update_post_meta( $post_id, '_vat_number', wc_clean( $_POST[ '_vat_number' ] ) );
-		update_post_meta( $post_id, 'VAT Number', wc_clean( $_POST[ '_vat_number' ] ) );
-	}
-
-	/**
-	 * Add fields to admin
-	 * @param  array $fields
+	 * Add fields to admin. This also handles save.
+	 *
+	 * @param  array $fields Fields being shown in admin.
 	 * @return array
 	 */
 	public static function admin_billing_fields( $fields ) {
 		$fields['vat_number'] = array(
 			'label' => __( 'VAT Number', 'woocommerce-eu-vat-number' ),
 			'show'  => false,
-			'id'    => '_vat_number'
+			'id'    => '_vat_number',
 		);
 		return $fields;
 	}
 
 	/**
-	 * Enqueue styles
-	 */
-	public static function styles() {
-		wp_enqueue_style( 'wc_eu_vat_admin_css', plugins_url( 'assets/css/admin.css', WC_EU_VAT_FILE ), array(), WC_EU_VAT_VERSION );
-	}
-
-	/**
-	 * Add Meta Boxes
+	 * Add Meta Boxes.
 	 */
 	public static function add_meta_boxes() {
 		add_meta_box( 'wc_eu_vat', __( 'EU VAT', 'woocommerce-eu-vat-number' ), array( __CLASS__, 'output' ), 'shop_order', 'side' );
 	}
 
 	/**
-	 * Output meta box
+	 * Enqueue styles.
+	 */
+	public static function styles() {
+		wp_enqueue_style( 'wc_eu_vat_admin_css', plugins_url( 'assets/css/admin.css', WC_EU_VAT_FILE ), array(), WC_EU_VAT_VERSION );
+	}
+
+	/**
+	 * Is this is an EU order?
+	 *
+	 * @param  WC_Order $order The order object.
+	 * @return boolean
+	 */
+	protected static function is_eu_order( $order ) {
+		if ( version_compare( WC_VERSION, '2.7', '<' ) ) {
+			return in_array( $order->billing_country, WC_EU_VAT_Number::get_eu_countries() );
+		} else {
+			return in_array( $order->get_billing_country(), WC_EU_VAT_Number::get_eu_countries() );
+		}
+	}
+
+	/**
+	 * Get order VAT Number data in one object/array.
+	 *
+	 * @param  WC_Order $order The order object.
+	 * @return object
+	 */
+	protected static function get_order_vat_data( $order ) {
+		if ( version_compare( WC_VERSION, '2.7', '<' ) ) {
+			return (object) array(
+				'vat_number'      => get_post_meta( $order->id, '_vat_number', true ),
+				'valid'           => 'true' === get_post_meta( $order->id, '_vat_number_is_valid', true ),
+				'validated'       => 'true' === get_post_meta( $order->id, '_vat_number_is_validated', true ),
+				'billing_country' => $order->billing_country,
+				'ip_address'      => get_post_meta( $order->id, '_customer_ip_address', true ),
+				'ip_country'      => get_post_meta( $order->id, '_customer_ip_country', true ),
+				'self_declared'   => 'true' === get_post_meta( $order->id, '_customer_self_declared_country', true ),
+			);
+		} else {
+			return (object) array(
+				'vat_number'      => $order->get_meta( '_vat_number', true ),
+				'valid'           => wc_string_to_bool( $order->get_meta( '_vat_number_is_valid', true ) ),
+				'validated'       => wc_string_to_bool( $order->get_meta( '_vat_number_is_validated', true ) ),
+				'billing_country' => $order->get_billing_country(),
+				'ip_address'      => $order->get_customer_ip_address(),
+				'ip_country'      => $order->get_meta( '_customer_ip_country', true ),
+				'self_declared'   => wc_string_to_bool( $order->get_meta( '_customer_self_declared_country', true ) ),
+			);
+		}
+	}
+
+	/**
+	 * Output meta box.
 	 */
 	public static function output() {
 		global $post, $theorder;
@@ -89,52 +119,61 @@ class WC_EU_VAT_Admin {
 		}
 
 		// We only need this box for EU orders
-		if ( ! in_array( $theorder->billing_country, WC_EU_VAT_Number::get_eu_countries() ) ) {
+		if ( ! self::is_eu_order( $theorder ) ) {
 			echo wpautop( __( 'This order is out of scope for EU VAT.', 'woocommerce-eu-vat-number' ) );
 			return;
 		}
+
+		$data      = self::get_order_vat_data( $theorder );
+		$countries = WC()->countries->get_countries();
 		?>
 		<table class="wc-eu-vat-table" cellspacing="0">
 			<tbody>
 				<tr>
-					<th><?php _e( 'B2B Transaction?', 'woocommerce-eu-vat-number' ); ?></th>
-					<td><?php echo get_post_meta( $post->ID, '_vat_number', true ) ? __( 'Yes', 'woocommerce-eu-vat-number' ) : __( 'No', 'woocommerce-eu-vat-number' ); ?></td>
+					<th><?php _e( 'B2B', 'woocommerce-eu-vat-number' ); ?></th>
+					<td><?php echo $data->vat_number ? __( 'Yes', 'woocommerce-eu-vat-number' ) : __( 'No', 'woocommerce-eu-vat-number' ); ?></td>
 					<td></td>
 				</tr>
-				<?php if ( get_post_meta( $post->ID, '_vat_number', true ) ) : ?>
+
+				<?php if ( $data->vat_number ) : ?>
 					<tr>
 						<th><?php _e( 'VAT ID', 'woocommerce-eu-vat-number' ); ?></th>
-						<td><?php echo esc_html( get_post_meta( $post->ID, '_vat_number', true ) ); ?></td>
+						<td><?php echo esc_html( $data->vat_number ); ?></td>
 						<td><?php
-						if ( get_post_meta( $post->ID, '_vat_number_is_validated', true ) !== 'true' ) {
-							echo '<span class="tips" data-tip="' . __( 'Validation was not possible', 'woocommerce-eu-vat-number' ) . '">?<span>';
-						} else {
-							echo get_post_meta( $post->ID, '_vat_number_is_valid', true ) === 'true' ? '&#10004;' : '&#10008;';
-						}
+							if ( ! $data->validated ) {
+								echo '<span class="tips" data-tip="' . __( 'Validation was not possible', 'woocommerce-eu-vat-number' ) . '">?<span>';
+							} else {
+								echo $data->valid ? '&#10004;' : '&#10008;';
+							}
 						?></td>
 					</tr>
-				<?php endif; ?>
-				<?php if ( metadata_exists( 'post', $post->ID, '_customer_ip_country' ) ) : ?>
+				<?php else : ?>
 					<tr>
 						<th><?php _e( 'IP Address', 'woocommerce-eu-vat-number' ); ?></th>
-						<td><?php echo get_post_meta( $post->ID, '_customer_ip_address', true ) ? esc_html( get_post_meta( $post->ID, '_customer_ip_address', true ) ) : __( 'Unknown', 'woocommerce-eu-vat-number' ); ?></td>
+						<td><?php echo $data->ip_address ? esc_html( $data->ip_address ) : __( 'Unknown', 'woocommerce-eu-vat-number' ); ?></td>
 						<td></td>
 					</tr>
 					<tr>
 						<th><?php _e( 'IP Country', 'woocommerce-eu-vat-number' ); ?></th>
-						<td><?php echo get_post_meta( $post->ID, '_customer_ip_country', true ) ? esc_html( get_post_meta( $post->ID, '_customer_ip_country', true ) ) : __( 'Unknown', 'woocommerce-eu-vat-number' ); ?></td>
-						<td></td>
+						<td><?php
+							if ( $data->ip_country ) {
+								echo esc_html__( $countries[ $data->billing_country ] ) . ' ';
+
+								if ( $data->billing_country === $data->ip_country ) {
+									echo '<span style="color:green">&#10004;</span>';
+								} elseif ( $data->self_declared ) {
+									esc_html_e( '(self-declared)', 'woocommerce-eu-vat-number' );
+								} else {
+									echo '<span style="color:red">&#10008;</span>';
+								}
+							} else {
+								esc_html_e( 'Unknown', 'woocommerce-eu-vat-number' );
+							}
+						?><td></td>
 					</tr>
 					<tr>
 						<th><?php _e( 'Billing Country', 'woocommerce-eu-vat-number' ); ?></th>
-						<td><?php echo get_post_meta( $post->ID, '_billing_country', true ) ? esc_html( get_post_meta( $post->ID, '_billing_country', true ) ) : __( 'Unknown', 'woocommerce-eu-vat-number' ); ?></td>
-						<td></td>
-					</tr>
-				<?php endif; ?>
-				<?php if ( get_post_meta( $post->ID, '_customer_self_declared_country', true ) === 'true' ) : ?>
-					<tr>
-						<th><?php _e( 'Self-declared Country', 'woocommerce-eu-vat-number' ); ?></th>
-						<td><?php echo '&#10004;'; ?></td>
+						<td><?php echo $data->billing_country ? esc_html( $countries[ $data->billing_country ] ) : __( 'Unknown', 'woocommerce-eu-vat-number' ); ?></td>
 						<td></td>
 					</tr>
 				<?php endif; ?>
@@ -144,14 +183,14 @@ class WC_EU_VAT_Admin {
 	}
 
 	/**
-	 * Add settings to WC
+	 * Add settings to WC.
 	 */
 	public static function admin_settings() {
 		woocommerce_admin_fields( self::$settings );
 	}
 
 	/**
-	 * Save settings
+	 * Save settings.
 	 */
 	public static function save_admin_settings() {
 		global $current_section;
@@ -162,7 +201,9 @@ class WC_EU_VAT_Admin {
 	}
 
 	/**
-	 * Add column
+	 * Add column.
+	 *
+	 * @param array $existing_columns Columns array.
 	 */
 	public static function add_column( $existing_columns ) {
 		$columns = array();
@@ -171,7 +212,7 @@ class WC_EU_VAT_Admin {
 			$columns[ $existing_column_key ] = $existing_column;
 
 			if ( 'shipping_address' === $existing_column_key ) {
-				$columns[ 'eu_vat' ] = __( 'EU VAT', 'woocommerce-eu-vat-number' );
+				$columns['eu_vat'] = __( 'EU VAT', 'woocommerce-eu-vat-number' );
 			}
 		}
 
@@ -179,40 +220,46 @@ class WC_EU_VAT_Admin {
 	}
 
 	/**
-	 * Show Column
+	 * Show Column.
+	 *
+	 * @param string $column Column being shown.
 	 */
 	public static function show_column( $column ) {
-		global $post, $woocommerce, $the_order;
+		global $post, $the_order;
 
-		if ( $column === 'eu_vat' ) {
-			if ( empty( $the_order ) || $the_order->id != $post->ID ) {
-				$the_order = wc_get_order( $post->ID );
-			}
-			if ( ! in_array( $the_order->billing_country, WC_EU_VAT_Number::get_eu_countries() ) ) {
-				echo wpautop( __( 'Out of scope.', 'woocommerce-eu-vat-number' ) );
-			} elseif ( get_post_meta( $post->ID, '_eu_vat_checked', true ) ) {
-				if ( $vat_number = get_post_meta( $post->ID, '_vat_number', true ) ) : ?>
+		if ( 'eu_vat' === $column ) {
+			echo '<p class="eu-vat-overview">';
 
-					<ul class="eu-vat-overview">
-						<li><strong><?php _e( 'VAT ID', 'woocommerce-eu-vat-number' ); ?>:</strong> <?php echo esc_html( $vat_number ); ?></li>
-					</ul>
-
-				<?php elseif ( metadata_exists( 'post', $post->ID, '_customer_ip_country' ) ) : ?>
-
-					<ul class="eu-vat-overview">
-						<li><strong><?php _e( 'Billing', 'woocommerce-eu-vat-number' ); ?>:</strong> <?php echo get_post_meta( $post->ID, '_billing_country', true ) ? esc_html( get_post_meta( $post->ID, '_billing_country', true ) ) : __( 'Unknown', 'woocommerce-eu-vat-number' ); ?></li>
-						<li><strong><?php _e( 'Matches IP?', 'woocommerce-eu-vat-number' ); ?>:</strong> <?php echo get_post_meta( $post->ID, '_billing_country', true ) === get_post_meta( $post->ID, '_customer_ip_country', true ) ? '&#10004;' : __( 'No', 'woocommerce-eu-vat-number' ); ?></li>
-						<li><strong><?php _e( 'Self Declared?', 'woocommerce-eu-vat-number' ); ?>:</strong> <?php echo get_post_meta( $post->ID, '_customer_self_declared_country', true ) === 'true' ? '&#10004;' : __( 'No', 'woocommerce-eu-vat-number' ); ?></li>
-					</ul>
-
-				<?php else :
-
-					echo '-';
-
-				endif;
+			if ( ! self::is_eu_order( $the_order ) ) {
+				echo '<span class="na">&ndash;</span>';
 			} else {
-				echo '-';
+				$data = self::get_order_vat_data( $the_order );
+
+				if ( $data->vat_number ) {
+					echo esc_html__( $data->vat_number ) . ' ';
+
+					if ( $data->validated && $data->valid ) {
+						echo '<span style="color:green">&#10004;</span>';
+					} elseif ( ! $data->validated ) {
+						esc_html_e( '(validation failed)', 'woocommerce-eu-vat-number' );
+					} else {
+						echo '<span style="color:red">&#10005;</span>';
+					}
+				} else {
+					$countries = WC()->countries->get_countries();
+
+					echo esc_html__( $countries[ $data->billing_country ] ) . ' ';
+
+					if ( $data->billing_country === $data->ip_country ) {
+						echo '<span style="color:green">&#10004;</span>';
+					} elseif ( $data->self_declared ) {
+						esc_html_e( '(self-declared)', 'woocommerce-eu-vat-number' );
+					} else {
+						echo '<span style="color:red">&#10008;</span>';
+					}
+				}
 			}
+			echo '</p>';
 		}
 	}
 }
