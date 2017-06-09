@@ -1,5 +1,15 @@
 *** EU VAT Number Changelog ***
 
+2017-06-06 - version 2.3.0
+* Fix - VAT now applies to shipping country as well.
+* Fix - Validate VAT against user submitted shipping and billing instead of whats on record.
+* Fix - Undefined variable notices on reports.
+* Fix - Shipping tax amount were not showing in reports.
+* Fix - Tax by code report not showing all types of refunds.
+* Remove - Switzerland from VAT definition.
+* Add - Enable b2b setting to force VAT to be entered.
+* Add - VAT validation on My Account VAT page.
+
 2017-04-13 - version 2.2.0
 * Renamed main file.
 * PHP 7.1 compatibility.

@@ -244,6 +244,44 @@ class WC_Non_EU_Sales_Report extends WC_Admin_Report {
 				}
 			}
 		}
+
+		$shipping_tax_amount = $this->get_order_report_data( array(
+			'data' => array(
+				'rate_id' => array(
+					'type'            => 'order_item_meta',
+					'order_item_type' => '',
+					'function'        => '',
+					'name'            => 'rate_id',
+				),
+				'shipping_tax_amount' => array(
+					'type'            => 'order_item_meta',
+					'order_item_type' => 'tax',
+					'function'        => '',
+					'name'            => 'shipping_tax_amount',
+				),
+			),
+			'filter_range' => true,
+			'query_type'   => 'get_results',
+			'group_by'     => '',
+			'order_types'  => array( 'shop_order', 'shop_order_refund' ),
+			'order_status' => array( 'completed' )
+		) );
+
+		foreach ( $shipping_tax_amount as $data ) {
+			$tax_value  = $data->shipping_tax_amount;
+			$tax_id     = $data->rate_id;
+
+			if ( ! isset( $grouped_tax_rows[ $tax_id ] ) ) {
+				$grouped_tax_rows[ $tax_id ] = (object) array(
+					'amount'              => 0,
+					'refunded_amount'     => 0,
+					'tax_amount'          => 0,
+					'refunded_tax_amount' => 0
+				);
+			}
+
+			$grouped_tax_rows[ $tax_id ]->tax_amount += wc_round_tax_total( $tax_value );
+		}
 		?>
 		<table class="widefat">
 			<thead>
@@ -272,6 +310,11 @@ class WC_Non_EU_Sales_Report extends WC_Admin_Report {
 				foreach ( $grouped_tax_rows as $rate_id => $tax_row ) {
 					if ( is_numeric( $rate_id ) ) {
 						$rate     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}woocommerce_tax_rates WHERE tax_rate_id = %d;", $rate_id ) );
+
+						if ( ! is_object( $rate ) ) {
+							continue;
+						}
+
 						$country  = $rate->tax_rate_country;
 						$tax_rate = apply_filters( 'woocommerce_reports_taxes_rate', $rate->tax_rate, $rate_id, $tax_row ) . '%';
 					} else {
@@ -279,7 +322,7 @@ class WC_Non_EU_Sales_Report extends WC_Admin_Report {
 						$tax_rate = '-';
 					}
 
-					if ( in_array( $country, WC_EU_VAT_Number::get_eu_countries() ) ) {
+					if ( in_array( $country, WC_EU_VAT_Number::get_eu_countries() ) || empty( WC()->countries->countries[ $country ] ) ) {
 						continue;
 					}
 
