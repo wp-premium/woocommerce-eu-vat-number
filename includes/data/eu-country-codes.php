@@ -7,7 +7,6 @@ return array(
 	'AT',
 	'BE',
 	'BG',
-	'CH',
 	'CY',
 	'CZ',
 	'DE',
