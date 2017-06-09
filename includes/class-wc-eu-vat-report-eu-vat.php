@@ -112,6 +112,13 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 	public function get_main_chart() {
 		global $wpdb;
 
+		$debug = false;
+
+		// If debug is enabled, don't use cached data.
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$debug = true;
+		}
+
 		$line_data = $this->get_order_report_data( array(
 			'data' => array(
 				'_line_total' => array(
@@ -125,24 +132,30 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 					'order_item_type' => '',
 					'function'        => '',
 					'name'            => '_line_tax_data'
-				)
+				),
+				'ID' => array(
+					'type'     => 'post_data',
+					'function' => '',
+					'name'     => 'refund_id',
+				),
 			),
 			'filter_range' => true,
 			'query_type'   => 'get_results',
 			'group_by'     => '',
 			'order_types'  => array( 'shop_order', 'shop_order_refund' ),
-			'order_status' => array( 'completed' )
+			'order_status' => array( 'completed', 'refunded' ),
+			'nocache'        => $debug,
 		) );
 
-		$grouped_tax_tows = array();
+		$grouped_tax_rows = array();
 
 		foreach ( $line_data as $data ) {
 			$line_total    = $data->_line_total;
 			$line_tax_data = maybe_unserialize( $data->_line_tax_data );
 
 			foreach ( $line_tax_data['total'] as $tax_id => $tax_value ) {
-				if ( ! isset( $grouped_tax_tows[ $tax_id ] ) ) {
-					$grouped_tax_tows[ $tax_id ] = (object) array(
+				if ( ! isset( $grouped_tax_rows[ $tax_id ] ) ) {
+					$grouped_tax_rows[ $tax_id ] = (object) array(
 						'amount'              => 0,
 						'refunded_amount'     => 0,
 						'tax_amount'          => 0,
@@ -151,15 +164,15 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 				}
 
 				if ( $line_total < 0 ) {
-					$grouped_tax_tows[ $tax_id ]->refunded_amount += $line_total;
+					$grouped_tax_rows[ $tax_id ]->refunded_amount += $line_total;
 				} else {
-					$grouped_tax_tows[ $tax_id ]->amount += $line_total;
+					$grouped_tax_rows[ $tax_id ]->amount += $line_total;
 				}
 
 				if ( $tax_value < 0 ) {
-					$grouped_tax_tows[ $tax_id ]->refunded_tax_amount += wc_round_tax_total( $tax_value );
+					$grouped_tax_rows[ $tax_id ]->refunded_tax_amount += wc_round_tax_total( $tax_value );
 				} else {
-					$grouped_tax_tows[ $tax_id ]->tax_amount += wc_round_tax_total( $tax_value );
+					$grouped_tax_rows[ $tax_id ]->tax_amount += wc_round_tax_total( $tax_value );
 				}
 			}
 		}
@@ -183,7 +196,8 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 			'query_type'   => 'get_results',
 			'group_by'     => '',
 			'order_types'  => array( 'shop_order', 'shop_order_refund' ),
-			'order_status' => array( 'refunded' )
+			'order_status' => array( 'refunded' ),
+			'nocache'        => $debug,
 		) );
 
 		foreach ( $refunded_line_data as $data ) {
@@ -191,16 +205,117 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 			$line_tax_data = maybe_unserialize( $data->_line_tax_data );
 
 			foreach ( $line_tax_data['total'] as $tax_id => $tax_value ) {
-				if ( ! isset( $grouped_tax_tows[ $tax_id ] ) ) {
-					$grouped_tax_tows[ $tax_id ] = (object) array(
+				if ( ! isset( $grouped_tax_rows[ $tax_id ] ) ) {
+					$grouped_tax_rows[ $tax_id ] = (object) array(
 						'amount'              => 0,
 						'refunded_amount'     => 0,
 						'tax_amount'          => 0,
 						'refunded_tax_amount' => 0
 					);
 				}
-				$grouped_tax_tows[ $tax_id ]->refunded_amount     += ( $line_total * -1 );
-				$grouped_tax_tows[ $tax_id ]->refunded_tax_amount += ( wc_round_tax_total( $tax_value ) * -1 );
+
+				$grouped_tax_rows[ $tax_id ]->refunded_amount += ( $line_total * -1 );
+				$grouped_tax_rows[ $tax_id ]->refunded_tax_amount += wc_round_tax_total( $tax_value * -1 );
+			}
+		}
+
+		$shipping_tax_amount = $this->get_order_report_data( array(
+			'data' => array(
+				'rate_id' => array(
+					'type'            => 'order_item_meta',
+					'order_item_type' => '',
+					'function'        => '',
+					'name'            => 'rate_id',
+				),
+				'shipping_tax_amount' => array(
+					'type'            => 'order_item_meta',
+					'order_item_type' => 'tax',
+					'function'        => '',
+					'name'            => 'shipping_tax_amount',
+				),
+			),
+			'filter_range' => true,
+			'query_type'   => 'get_results',
+			'group_by'     => '',
+			'order_types'  => array( 'shop_order', 'shop_order_refund' ),
+			'order_status' => array( 'completed' ),
+			'nocache'        => $debug,
+		) );
+
+		foreach ( $shipping_tax_amount as $data ) {
+			$tax_value  = $data->shipping_tax_amount;
+			$tax_id     = $data->rate_id;
+
+			if ( ! isset( $grouped_tax_rows[ $tax_id ] ) ) {
+				$grouped_tax_rows[ $tax_id ] = (object) array(
+					'amount'              => 0,
+					'refunded_amount'     => 0,
+					'tax_amount'          => 0,
+					'refunded_tax_amount' => 0
+				);
+			}
+
+			$grouped_tax_rows[ $tax_id ]->tax_amount += wc_round_tax_total( $tax_value );
+		}
+
+		$refund_amounts = $this->get_order_report_data( array(
+			'data' => array(
+				'ID' => array(
+					'type'     => 'post_data',
+					'function' => '',
+					'name'     => 'refund_id',
+				),
+				'post_parent' => array(
+					'type'     => 'post_data',
+					'function' => '',
+					'name'     => 'order_id',
+				),
+				'_refund_amount' => array(
+					'type'     => 'meta',
+					'function' => '',
+					'name'     => 'total_refund',
+				),
+			),
+			'group_by'            => 'refund_id',
+			'query_type'          => 'get_results',
+			'filter_range'        => true,
+			'order_status'        => false,
+			'parent_order_status' => array( 'completed', 'processing', 'on-hold' ),
+			'nocache'               => $debug,
+		) );
+
+		foreach ( $refund_amounts as $refund_data ) {
+			$order = wc_get_order( $refund_data->order_id );
+
+			if ( is_object( $order ) ) {
+				$cached_results = get_transient( strtolower( get_class( $this ) . '_' . $refund_data->order_id ) );
+
+				if ( false === $cached_results ) {
+					$cached_results = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta LEFT JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON order_itemmeta.order_item_id = order_items.order_item_id WHERE order_items.order_id = %d AND order_items.order_item_type = %s AND order_itemmeta.meta_key = %s", $refund_data->order_id, 'tax', 'rate_id' ) );
+
+					set_transient( strtolower( get_class( $this ) . '_' . $refund_data->order_id ), $cached_results, DAY_IN_SECONDS );
+				}
+
+				$tax_id = $cached_results;
+
+				if ( isset( $grouped_tax_rows[ $tax_id ] ) ) {
+
+					$total_refund = $refund_data->total_refund;
+
+					// Subtract any line items from this total
+					foreach ( $line_data as $data ) {
+						if ( $refund_data->refund_id === $data->refund_id ) {
+							$total_refund += $data->_line_total;
+							$line_tax_data = maybe_unserialize( $data->_line_tax_data );
+
+							foreach ( $line_tax_data['total'] as $tax_id => $tax_value ) {
+								$total_refund += wc_round_tax_total( $tax_value );
+							}
+						}
+					}
+
+					$grouped_tax_rows[ $tax_id ]->refunded_amount += -$total_refund;
+				}
 			}
 		}
 		?>
@@ -218,13 +333,13 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 					<th class="total_row"><?php _e( 'Final Tax Amount ', 'woocommerce-eu-vat-number' ); ?></th>
 				</tr>
 			</thead>
-			<?php if ( $grouped_tax_tows ) : ?>
+			<?php if ( $grouped_tax_rows ) : ?>
 				<tbody>
 					<?php
-					foreach ( $grouped_tax_tows as $rate_id => $tax_row ) {
+					foreach ( $grouped_tax_rows as $rate_id => $tax_row ) {
 						$rate = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}woocommerce_tax_rates WHERE tax_rate_id = %d;", $rate_id ) );
 
-						if ( ! in_array( $rate->tax_rate_country, WC_EU_VAT_Number::get_eu_countries() ) ) {
+						if ( ! is_object( $rate ) || ! in_array( $rate->tax_rate_country, WC_EU_VAT_Number::get_eu_countries() ) ) {
 							continue;
 						}
 						?>

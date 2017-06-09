@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WC_EU_VAT_My_Account {
 
 	public $endpoint = 'vat-number';
+	public $messages = array();
 
 	/**
 	 * Constructor
@@ -132,6 +133,7 @@ class WC_EU_VAT_My_Account {
 		$vars = array(
 			'vat_number' => get_user_meta( get_current_user_id(), 'vat_number', true ),
 			'show_title' => version_compare( WC()->version, '2.6', '<' ),
+			'messages'   => $this->messages,
 		);
 
 		wc_get_template(
@@ -142,12 +144,50 @@ class WC_EU_VAT_My_Account {
 		);
 	}
 
+	/**
+	 * Validate a VAT number.
+	 * @version 2.3.0
+	 * @since 2.3.0
+	 * @param  string $vat_number
+	 * @param  string $billing_country
+	 */
+	public function validate( $vat_number, $billing_country ) {
+		$vat_number = WC_EU_VAT_Number::get_formatted_vat_number( wc_clean( $vat_number ) );
+		$valid      = WC_EU_VAT_Number::vat_number_is_valid( $vat_number, wc_clean( $billing_country ) );
+
+		// Allow empty input to clear VAT field.
+		if ( empty( $vat_number ) ) {
+			return true;
+		}
+
+		if ( is_wp_error( $valid ) ) {
+			throw new Exception( $valid->get_error_message() );
+		}
+
+		if ( ! $valid ) {
+			throw new Exception( sprintf( __( 'You have entered an invalid VAT number (%1$s) for your billing country (%2$s).', 'woocommerce-eu-vat-number' ), $vat_number, $billing_country ) );
+		}
+
+		return true;
+	}
+
 	/*
 		Function to save VAT number from the my account form
 	*/	
 	public function save_vat_number() {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'woocommerce-edit_vat_number' ) ) {
-			update_user_meta( get_current_user_id(), 'vat_number', $_POST['vat_number'] );
+			try {
+				$posted_vat      = $_POST['vat_number'];
+				$user            = get_userdata( get_current_user_id() );
+				$billing_country = $user->billing_country;
+
+				self::validate( $posted_vat, $billing_country );
+
+				update_user_meta( get_current_user_id(), 'vat_number', $posted_vat );
+				$this->messages = array( 'message' => __( 'VAT number saved successfully!', 'woocommerce-eu-vat-number' ), 'status' => 'info' );
+			} catch ( Exception $e ) {
+				$this->messages = array( 'message' => $e->getMessage(), 'status' => 'error' );
+			}
 		}
 	}	
 }

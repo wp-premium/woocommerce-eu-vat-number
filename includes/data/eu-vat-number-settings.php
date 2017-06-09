@@ -63,6 +63,13 @@ return array(
 		)
 	),
 	array(
+		'name'    => __( 'Enable B2B Transactions', 'woocommerce-eu-vat-number' ),
+		'desc'    => __( 'This will force users to check out with a VAT Number, useful for sites that transact purely from B2B.', 'woocommerce-eu-vat-number' ),
+		'id'      => 'woocommerce_eu_vat_number_b2b',
+		'type'    => 'checkbox',
+		'default' => 'no'
+	),
+	array(
 		'type' => 'sectionend',
 	),
 	array(

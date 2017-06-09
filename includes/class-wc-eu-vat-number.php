@@ -231,14 +231,17 @@ class WC_EU_VAT_Number {
 	}
 
 	/**
-	 * Maybe set tax exception based on countries.
+	 * Set tax exception based on countries.
 	 *
-	 * @param  bool $excempt are they excempt?
-	 * @param  string country of customer
+	 * @param bool   $exempt Are they exempt?
+	 * @param string $billing_country Billing country of customer
+	 * @param string $shipping_country Shipping country of customer
 	 */
-	public static function maybe_set_vat_excempt( $excempt, $country ) {
-		if ( ( WC()->countries->get_base_country() === $country && 'yes' === get_option( 'woocommerce_eu_vat_number_deduct_in_base', 'yes' ) ) || WC()->countries->get_base_country() !== $country ) {
-			WC()->customer->set_is_vat_exempt( $excempt );
+	public static function maybe_set_vat_exempt( $exempt, $billing_country, $shipping_country ) {
+		$base_country_match = in_array( WC()->countries->get_base_country(), array( $billing_country, $shipping_country ) );
+
+		if ( ( $base_country_match && 'yes' === get_option( 'woocommerce_eu_vat_number_deduct_in_base', 'yes' ) ) || ! $base_country_match ) {
+			WC()->customer->set_is_vat_exempt( $exempt );
 		}
 	}
 
@@ -250,27 +253,34 @@ class WC_EU_VAT_Number {
 	public static function process_checkout() {
 		self::reset();
 
-		$billing_country = is_callable( array( WC()->customer, 'get_billing_country' ) ) ? WC()->customer->get_billing_country() : WC()->customer->get_country();
+		if ( 'yes' === get_option( 'woocommerce_eu_vat_number_b2b', 'no' ) && empty( $_POST['vat_number'] ) ) {
+			wc_add_notice( __( 'Please enter your VAT Number.', 'woocommerce-eu-vat-number' ), 'error' );
+		}
+
+		$billing_country  = wc_clean( $_POST['billing_country'] );
+		$shipping_country = wc_clean( ! empty( $_POST['shipping_country'] ) ? $_POST['shipping_country'] : $_POST['billing_country'] );
 
 		// B2B.
 		if ( in_array( $billing_country, self::get_eu_countries() ) && ! empty( $_POST['vat_number'] ) ) {
 			self::validate( wc_clean( $_POST['vat_number'] ), $billing_country );
 
 			if ( true === self::$data['validation']['valid'] ) {
-				self::maybe_set_vat_excempt( true, $billing_country );
-			} elseif ( false === self::$data['validation']['valid'] ) {
-				wc_add_notice( sprintf( __( 'You have entered an invalid VAT number (%1$s) for your billing country (%2$s).', 'woocommerce-eu-vat-number' ), self::$data['vat_number'], $billing_country ), 'error' );
+				self::maybe_set_vat_exempt( true, $billing_country, $shipping_country );
 			} else {
 				$fail_handler = get_option( 'woocommerce_eu_vat_number_failure_handling', 'reject' );
 				switch ( $fail_handler ) {
 					case 'accept_with_vat' :
-						// Do no excemption.
+						// Do no exemption.
 					break;
 					case 'accept' :
-						self::maybe_set_vat_excempt( true, $billing_country );
+						self::maybe_set_vat_exempt( true, $billing_country, $shipping_country );
 					break;
 					default :
-						wc_add_notice( self::$data['validation']['error'], 'error' );
+						if ( false === self::$data['validation']['valid'] ) {
+							wc_add_notice( sprintf( __( 'You have entered an invalid VAT number (%1$s) for your billing country (%2$s).', 'woocommerce-eu-vat-number' ), self::$data['vat_number'], $billing_country ), 'error' );
+						} else {
+							wc_add_notice( self::$data['validation']['error'], 'error' );
+						}
 					break;
 				}
 			}
@@ -347,15 +357,17 @@ class WC_EU_VAT_Number {
 
 		if ( in_array( $billing_country, self::get_eu_countries() ) && ! empty( $vat_number ) ) {
 			$billing_country = ! empty( $billing_country ) ? $billing_country : '';
+			$shipping_country = ! empty( $shipping_country ) ? $shipping_country : '';
+
 			self::validate( wc_clean( $vat_number ), $billing_country );
 
 			if ( true === self::$data['validation']['valid'] ) {
-				self::maybe_set_vat_excempt( true, $billing_country );
-			} elseif ( false !== self::$data['validation']['valid'] ) {
+				self::maybe_set_vat_exempt( true, $billing_country, $shipping_country );
+			} else {
 				$fail_handler = get_option( 'woocommerce_eu_vat_number_failure_handling', 'reject' );
 				switch ( $fail_handler ) {
 					case 'accept' :
-						self::maybe_set_vat_excempt( true, $billing_country );
+						self::maybe_set_vat_exempt( true, $billing_country, $shipping_country );
 					break;
 				}
 			}

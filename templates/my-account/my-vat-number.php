@@ -18,6 +18,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 </header>
 <?php endif; ?>
 
+<?php if ( ! empty( $messages ) ) { ?>
+	<ul class="woocommerce-<?php echo esc_attr( $messages['status'] ); ?>">
+		<li><?php echo $messages['message']; ?></li>
+	</ul>
+<?php } ?>
 <form method="post">
 	<p class="form-row form-row form-row-first">
 		<input type="text" value="<?php echo esc_attr( $vat_number ); ?>" id="vat_number" name="vat_number" class="input-text" />
