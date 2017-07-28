@@ -33,6 +33,41 @@ class WC_EU_VAT_My_Account {
 		if ( isset( $_POST[ 'action' ] ) && 'edit_vat_number' === $_POST[ 'action' ] ) {
 			$this->save_vat_number();
 		}
+
+		add_filter( 'woocommerce_product_is_taxable', array( $this, 'maybe_remove_vat_from_cart' ), 10, 2 );
+	}
+
+	/**
+	 * Checks to see if we need to remove vat from displaying in the cart.
+	 * This may not be the best way to do this however I have not found a better way.
+	 * See: https://github.com/woocommerce/woocommerce-eu-vat-number/issues/71
+	 *
+	 * @since 2.3.1
+	 * @version 2.3.1
+	 * @param bool $is_taxable
+	 * @param object $product
+	 * @return bool
+	 */
+	public function maybe_remove_vat_from_cart( $is_taxable, $product ) {
+		if ( ! wc_tax_enabled() || ! is_cart() || ! is_user_logged_in() ) {
+			return $is_taxable;
+		}
+
+		$user            = get_userdata( get_current_user_id() );
+		$billing_country = $user->billing_country;
+		$vat_number      = get_user_meta( $user->ID, 'vat_number', true );
+
+		if ( empty( $vat_number ) ) {
+			return $is_taxable;
+		}
+
+		// Validate if VAT is valid.
+		try {
+			self::validate( $vat_number, $billing_country );
+			return false;
+		} catch( Exception $e ) {
+			return $is_taxable;
+		}
 	}
 
 	/**
