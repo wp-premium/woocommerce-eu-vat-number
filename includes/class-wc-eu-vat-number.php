@@ -111,9 +111,17 @@ class WC_EU_VAT_Number {
 	}
 
 	/**
-	 * Show the VAT field on the checkout
+	 * Show the VAT field on the checkout.
+	 *
+	 * @since 1.0.0
+	 * @version 2.3.1
 	 */
 	public static function vat_number_field() {
+		// If order total is zero (free), don't need to proceed.
+		if ( ! WC()->cart->needs_payment() ) {
+			return;
+		}
+
 		wc_get_template( 'vat-number-field.php', array(
 			'label'       => get_option( 'woocommerce_eu_vat_number_field_label' ),
 			'description' => get_option( 'woocommerce_eu_vat_number_field_description' ),
@@ -253,12 +261,12 @@ class WC_EU_VAT_Number {
 	public static function process_checkout() {
 		self::reset();
 
-		if ( 'yes' === get_option( 'woocommerce_eu_vat_number_b2b', 'no' ) && empty( $_POST['vat_number'] ) ) {
-			wc_add_notice( __( 'Please enter your VAT Number.', 'woocommerce-eu-vat-number' ), 'error' );
-		}
-
 		$billing_country  = wc_clean( $_POST['billing_country'] );
 		$shipping_country = wc_clean( ! empty( $_POST['shipping_country'] ) ? $_POST['shipping_country'] : $_POST['billing_country'] );
+
+		if ( in_array( $billing_country, self::get_eu_countries() ) && 'yes' === get_option( 'woocommerce_eu_vat_number_b2b', 'no' ) && empty( $_POST['vat_number'] ) ) {
+			wc_add_notice( __( 'Please enter your VAT Number.', 'woocommerce-eu-vat-number' ), 'error' );
+		}
 
 		// B2B.
 		if ( in_array( $billing_country, self::get_eu_countries() ) && ! empty( $_POST['vat_number'] ) ) {
@@ -344,9 +352,16 @@ class WC_EU_VAT_Number {
 	/**
 	 * Triggered when the totals are updated on the checkout.
 	 *
+	 * @since 1.0.0
+	 * @version 2.3.1
 	 * @param array $form_data
 	 */
 	public static function ajax_update_checkout_totals( $form_data ) {
+		// If order total is zero (free), don't need to proceed.
+		if ( ! WC()->cart->needs_payment() ) {
+			return;
+		}
+
 		parse_str( $form_data );
 
 		self::reset();
