@@ -19,7 +19,7 @@ class WC_EU_VAT_My_Account {
 		// New endpoint for vat-number WC >= 2.6.
 		add_action( 'init', array( $this, 'add_endpoints' ) );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ), 0 );
-		
+
 		// Change My Account page title.
 		add_filter( 'the_title', array( $this, 'endpoint_title' ) );
 
@@ -40,34 +40,47 @@ class WC_EU_VAT_My_Account {
 	/**
 	 * Checks to see if we need to remove vat from displaying in the cart.
 	 * This may not be the best way to do this however I have not found a better way.
-	 * See: https://github.com/woocommerce/woocommerce-eu-vat-number/issues/71
 	 *
 	 * @since 2.3.1
-	 * @version 2.3.1
-	 * @param bool $is_taxable
-	 * @param object $product
-	 * @return bool
+	 * @version 2.3.2
+	 *
+	 * @see https://github.com/woocommerce/woocommerce-eu-vat-number/issues/71
+	 * @see https://github.com/woocommerce/woocommerce-eu-vat-number/issues/74
+	 *
+	 * @param bool       $is_taxable Is taxable?
+	 * @param WC_Product $product    Product object.
+	 *
+	 * @return bool True if taxable.
 	 */
 	public function maybe_remove_vat_from_cart( $is_taxable, $product ) {
-		if ( ! wc_tax_enabled() || ! is_cart() || ! is_user_logged_in() ) {
+		/**
+		 * Checking `is_checkout` in case cart page is also set to checkout.
+		 *
+		 * @see https://github.com/woocommerce/woocommerce-eu-vat-number/issues/77
+		 */
+		if ( ! wc_tax_enabled() || ! is_cart() || is_checkout() || ! is_user_logged_in() ) {
 			return $is_taxable;
 		}
 
-		$user            = get_userdata( get_current_user_id() );
-		$billing_country = $user->billing_country;
-		$vat_number      = get_user_meta( $user->ID, 'vat_number', true );
-
+		$vat_number = get_user_meta( get_current_user_id(), 'vat_number', true );
 		if ( empty( $vat_number ) ) {
 			return $is_taxable;
 		}
 
-		// Validate if VAT is valid.
+		// Validate if VAT is valid. If valid, check for VAT exempt.
 		try {
-			self::validate( $vat_number, $billing_country );
-			return false;
-		} catch( Exception $e ) {
-			return $is_taxable;
-		}
+			$billing_country = version_compare( WC_VERSION, '3.0', '<' )
+				? WC()->customer->country
+				: WC()->customer->get_billing_country();
+
+			$shipping_country = WC()->customer->get_shipping_country();
+
+			if ( self::validate( $vat_number, $billing_country ) ) {
+				WC_EU_VAT_Number::maybe_set_vat_exempt( true, $billing_country, $shipping_country );
+			}
+		} catch( Exception $e ) {}
+
+		return $is_taxable;
 	}
 
 	/**
@@ -206,9 +219,9 @@ class WC_EU_VAT_My_Account {
 		return true;
 	}
 
-	/*
-		Function to save VAT number from the my account form
-	*/	
+	/**
+	 * Function to save VAT number from the my account form.
+	 */
 	public function save_vat_number() {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'woocommerce-edit_vat_number' ) ) {
 			try {
@@ -224,7 +237,7 @@ class WC_EU_VAT_My_Account {
 				$this->messages = array( 'message' => $e->getMessage(), 'status' => 'error' );
 			}
 		}
-	}	
+	}
 }
 
 $wc_eu_vat_my_account = new WC_EU_VAT_My_Account();
