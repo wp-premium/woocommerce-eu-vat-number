@@ -246,7 +246,11 @@ class WC_EU_VAT_Number {
 	 * @param string $shipping_country Shipping country of customer
 	 */
 	public static function maybe_set_vat_exempt( $exempt, $billing_country, $shipping_country ) {
-		$base_country_match = in_array( WC()->countries->get_base_country(), array( $billing_country, $shipping_country ) );
+		if ( 'billing' === get_option( 'woocommerce_tax_based_on', 'billing' ) ) {
+			$base_country_match = ( WC()->countries->get_base_country() === $billing_country );
+		} else {
+			$base_country_match = in_array( WC()->countries->get_base_country(), array( $billing_country, $shipping_country ) );
+		}
 
 		if ( ( $base_country_match && 'yes' === get_option( 'woocommerce_eu_vat_number_deduct_in_base', 'yes' ) ) || ! $base_country_match ) {
 			WC()->customer->set_is_vat_exempt( $exempt );

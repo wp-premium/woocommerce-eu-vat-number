@@ -1,5 +1,8 @@
 *** EU VAT Number Changelog ***
 
+2017-10-09 - version 2.3.3
+* Fix - Issue where exempt check uses both shipping and billing country for matching base country.
+
 2017-08-27 - version 2.3.2
 * Fix - Issue where VAT removal from cart is applied even if the country is the same as the base country.
 * Fix - Issue where VAT number from account is always used when cart page is set to checkout.
