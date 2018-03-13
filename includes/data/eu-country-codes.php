@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-return array(
+return apply_filters( 'woocommerce_eu_vat_number_country_codes', array(
 	'AT',
 	'BE',
 	'BG',
@@ -34,4 +34,4 @@ return array(
 	'SK',
 	'IM',
 	'MC'
-);
+) );

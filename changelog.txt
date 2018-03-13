@@ -1,5 +1,9 @@
 *** EU VAT Number Changelog ***
 
+2018-02-05 - version 2.3.6
+* Fix - Cached VAT lookups not applying proper exemptions
+* New - Adds a filter to be able to control which countries charge VAT, via code.
+
 2018-01-17 - version 2.3.5
 * Fix - Properly handle shipping address depending on 'Ship to different address' checked or not.
 * Fix - Make SOAP request to VIES directly to help prevent IPs being blocked.
