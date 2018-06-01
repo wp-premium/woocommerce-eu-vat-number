@@ -1,5 +1,15 @@
 *** EU VAT Number Changelog ***
 
+2018-05-22 - version 2.3.7
+* Fix    - PHP deprecation notice for 'parse_str'.
+* Fix    - Increasing timeout for SOAP requests.
+* Fix    - Show SOAP requirement notice and disable VAT lookups if needed.
+* Add    - Added woocommerce_eu_vat_number_soap_parameters filter for modifying SOAP request parameters.
+* Fix    - Use proper parse_str format in ajax_update_checkout_totals.
+* Update - WC tested up to 3.4
+* Update - Privacy policy notification.
+* Update - Export/erasure hooks added.
+
 2018-02-05 - version 2.3.6
 * Fix - Cached VAT lookups not applying proper exemptions
 * New - Adds a filter to be able to control which countries charge VAT, via code.
