@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce EU VAT Number
  * Plugin URI: https://woocommerce.com/products/eu-vat-number/
  * Description: The EU VAT Number extension lets you collect and validate EU VAT numbers during checkout to identify B2B transactions verses B2C. IP Addresses can also be validated to ensure they match the billing address. EU businesses with a valid VAT number can have their VAT removed prior to payment.
- * Version: 2.3.6
+ * Version: 2.3.7
  * Author: WooCommerce
  * Author URI: https://woocommerce.com/
  * Text Domain: woocommerce-eu-vat-number
@@ -11,7 +11,7 @@
  * Requires at least: 4.4
  * Tested up to: 4.7
  * WC requires at least: 2.6
- * WC tested up to: 3.3
+ * WC tested up to: 3.4
  *
  * Copyright: © 2009-2017 WooCommerce.
  * License: GNU General Public License v3.0
@@ -25,14 +25,7 @@ if ( ! function_exists( 'woothemes_queue_update' ) ) {
 	require_once( 'woo-includes/woo-functions.php' );
 }
 
-/**
- * Requires WooCommerce
- */
-if ( ! is_woocommerce_active() ) {
-	return;
-}
-
-define( 'WC_EU_VAT_VERSION', '2.3.6' );
+define( 'WC_EU_VAT_VERSION', '2.3.7' );
 define( 'WC_EU_VAT_FILE', __FILE__ );
 define( 'WC_EU_VAT_PLUGIN_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
 
@@ -74,6 +67,10 @@ class WC_EU_VAT_Number_Init {
 				'callback'        => array( $this, 'is_woocommerce_version_supported' ),
 				'notice_callback' => array( $this, 'woocommerce_wrong_version_notice' ),
 			),
+			'soap_required' => array(
+				'callback'        => array( $this, 'is_soap_supported' ),
+				'notice_callback' => array( $this, 'requires_soap_notice' ),
+			),
 		);
 		foreach ( $dependencies as $check ) {
 			if ( ! call_user_func( $check['callback'] ) ) {
@@ -94,6 +91,7 @@ class WC_EU_VAT_Number_Init {
 	public function is_woocommerce_active() {
 		return class_exists( 'woocommerce' );
 	}
+
 	/**
 	 * Checks if the current WooCommerce version is supported.
 	 * Note: Must be run after the "plugins_loaded" action fires.
@@ -110,23 +108,45 @@ class WC_EU_VAT_Number_Init {
 	}
 
 	/**
+	 * Checks if the server supports SOAP.
+	 *
+	 * @since 2.3.7
+	 * @return bool
+	 */
+	public function is_soap_supported() {
+		return class_exists( 'SoapClient' );
+	}
+
+	/**
 	 * WC inactive notice.
 	 *
-	 * @since  1.0.0
+	 * @since 1.0.0
 	 */
 	public function woocommerce_inactive_notice() {
 		if ( current_user_can( 'activate_plugins' ) ) {
-			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number extension is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be active for WooCommerce EU VAT Number extension to work. %1$sPlease install and activate WooCommerce%2$s.', 'woocommerce-eu-vat-number' ), '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
+			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be active for EU VAT Number to work. %1$sPlease install and activate WooCommerce%2$s.', 'woocommerce-eu-vat-number' ), '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
 		}
 	}
+
 	/**
 	 * Wrong version notice.
 	 *
-	 * @since  1.0.0
+	 * @since 1.0.0
 	 */
 	public function woocommerce_wrong_version_notice() {
 		if ( current_user_can( 'activate_plugins' ) ) {
-			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number extension is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be at least version %s for WooCommerce EU VAT Number extension to work. %1$sPlease upgrade WooCommerce%2$s.', 'woocommerce-eu-vat-number' ), WC_EU_VAT_Number_Init::WC_MIN_VERSION, '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
+			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be at least version %s for EU VAT Number to work. %2$sPlease upgrade WooCommerce%3$s.', 'woocommerce-eu-vat-number' ), WC_EU_VAT_Number_Init::WC_MIN_VERSION, '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
+		}
+	}
+
+	/**
+	 * No SOAP support notice.
+	 *
+	 * @since 2.3.7
+	 */
+	public function requires_soap_notice() {
+		if ( current_user_can( 'activate_plugins' ) ) {
+			echo '<div class="error"><p><strong>' . __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . __( 'Your server does not provide SOAP support which is required functionality for communicating with VIES. You will need to reach out to your web hosting provider to get information on how to enable this functionality on your server.', 'woocommerce-eu-vat-number' ) . '</p></div>';
 		}
 	}
 
@@ -140,6 +160,8 @@ class WC_EU_VAT_Number_Init {
 			if ( version_compare( get_option( 'woocommerce_eu_vat_version', 0 ), WC_EU_VAT_VERSION, '<' ) ) {
 				add_action( 'init', array( $this, 'install' ) );
 			}
+
+			include_once( 'includes/class-wc-eu-vat-privacy.php' );
 
 			if ( ! class_exists( 'WC_EU_VAT_Number' ) ) {
 				include_once( 'includes/class-wc-eu-vat-number.php' );

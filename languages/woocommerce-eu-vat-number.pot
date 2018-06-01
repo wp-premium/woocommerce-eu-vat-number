@@ -2,10 +2,10 @@
 # This file is distributed under the same license as the WooCommerce EU VAT Number package.
 msgid ""
 msgstr ""
-"Project-Id-Version: WooCommerce EU VAT Number 2.3.6\n"
+"Project-Id-Version: WooCommerce EU VAT Number 2.3.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-eu-"
 "vat-number\n"
-"POT-Creation-Date: 2018-02-05 22:18:27+00:00\n"
+"POT-Creation-Date: 2018-05-22 19:56:42+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -16,7 +16,7 @@ msgstr ""
 #: includes/class-wc-eu-vat-admin.php:46
 #: includes/class-wc-eu-vat-my-account.php:125
 #: includes/class-wc-eu-vat-my-account.php:147
-#: includes/class-wc-eu-vat-number.php:392
+#: includes/class-wc-eu-vat-number.php:391
 #: includes/data/eu-vat-number-settings.php:35
 #: includes/data/eu-vat-number-settings.php:36
 #: templates/my-account/my-vat-number.php:17
@@ -24,6 +24,7 @@ msgid "VAT Number"
 msgstr ""
 
 #: includes/class-wc-eu-vat-admin.php:57 includes/class-wc-eu-vat-admin.php:215
+#: includes/class-wc-eu-vat-privacy.php:12
 msgid "EU VAT"
 msgstr ""
 
@@ -80,7 +81,7 @@ msgid "(validation failed)"
 msgstr ""
 
 #: includes/class-wc-eu-vat-my-account.php:216
-#: includes/class-wc-eu-vat-number.php:332
+#: includes/class-wc-eu-vat-number.php:331
 msgid ""
 "You have entered an invalid VAT number (%1$s) for your billing country "
 "(%2$s)."
@@ -90,19 +91,19 @@ msgstr ""
 msgid "VAT number saved successfully!"
 msgstr ""
 
-#: includes/class-wc-eu-vat-number.php:235
+#: includes/class-wc-eu-vat-number.php:237
 msgid "Invalid country code"
 msgstr ""
 
-#: includes/class-wc-eu-vat-number.php:245
+#: includes/class-wc-eu-vat-number.php:247
 msgid "Error communicating with the VAT validation server - please try again"
 msgstr ""
 
-#: includes/class-wc-eu-vat-number.php:312
+#: includes/class-wc-eu-vat-number.php:311
 msgid "Please enter your VAT Number."
 msgstr ""
 
-#: includes/class-wc-eu-vat-number.php:343
+#: includes/class-wc-eu-vat-number.php:342
 msgid ""
 "Your IP Address (%1$s) does not match your billing country (%2$s). European "
 "VAT laws require your IP address to match your billing country when "
@@ -110,8 +111,58 @@ msgid ""
 "your billing country using the checkbox below."
 msgstr ""
 
-#: includes/class-wc-eu-vat-number.php:481
+#: includes/class-wc-eu-vat-number.php:479
 msgid "VAT ID: %s"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:14
+#: includes/class-wc-eu-vat-privacy.php:18
+msgid "WooCommerce EU VAT Order Data"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:15
+#: includes/class-wc-eu-vat-privacy.php:17
+msgid "WooCommerce EU VAT Customer Data"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:51
+msgid ""
+"By using this extension, you may be storing personal data or sharing data "
+"with an external service. <a href=\"%s\" target=\"_blank\">Learn more about "
+"how this works, including what you may want to include in your privacy "
+"policy.</a>"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:74
+msgid "Orders"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:78
+msgid "EU VAT number"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:82
+msgid "EU VAT country"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:86
+msgid "EU VAT self-declared country"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:117
+msgid "Customer Data"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:121
+msgid "VAT number"
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:154
+msgid "EU VAT User Data Erased."
+msgstr ""
+
+#: includes/class-wc-eu-vat-privacy.php:221
+msgid "EU VAT Order Data Erased."
 msgstr ""
 
 #: includes/class-wc-eu-vat-report-ec-sales-list.php:31
@@ -339,43 +390,52 @@ msgctxt "Field Placeholder"
 msgid "N/A"
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:119 woocommerce-eu-vat-number.php:129
-msgid "WooCommerce EU VAT Number extension is inactive."
+#: woocommerce-eu-vat-number.php:127 woocommerce-eu-vat-number.php:138
+#: woocommerce-eu-vat-number.php:149
+msgid "WooCommerce EU VAT Number is inactive."
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:119
+#: woocommerce-eu-vat-number.php:127
 msgid ""
-"The WooCommerce plugin must be active for WooCommerce EU VAT Number "
-"extension to work. %1$sPlease install and activate WooCommerce%2$s."
+"The WooCommerce plugin must be active for EU VAT Number to work. %1$sPlease "
+"install and activate WooCommerce%2$s."
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:129
+#: woocommerce-eu-vat-number.php:138
 msgid ""
-"The WooCommerce plugin must be at least version %s for WooCommerce EU VAT "
-"Number extension to work. %1$sPlease upgrade WooCommerce%2$s."
+"The WooCommerce plugin must be at least version %s for EU VAT Number to "
+"work. %2$sPlease upgrade WooCommerce%3$s."
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:183
+#: woocommerce-eu-vat-number.php:149
+msgid ""
+"Your server does not provide SOAP support which is required functionality "
+"for communicating with VIES. You will need to reach out to your web hosting "
+"provider to get information on how to enable this functionality on your "
+"server."
+msgstr ""
+
+#: woocommerce-eu-vat-number.php:205
 msgid "Settings"
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:198
+#: woocommerce-eu-vat-number.php:220
 msgid "View Plugin Documentation"
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:198
+#: woocommerce-eu-vat-number.php:220
 msgid "Docs"
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:199
+#: woocommerce-eu-vat-number.php:221
 msgid "View Plugin Changelog"
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:199
+#: woocommerce-eu-vat-number.php:221
 msgid "Changelog"
 msgstr ""
 
-#: woocommerce-eu-vat-number.php:200
+#: woocommerce-eu-vat-number.php:222
 msgid "Support"
 msgstr ""
 
