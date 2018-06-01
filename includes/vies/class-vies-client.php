@@ -56,22 +56,27 @@ class VIES_Client {
 	 * @return SoapClient
 	 */
 	public function get_soap_client() {
+
+		$soap_parameters = apply_filters( 'woocommerce_eu_vat_number_soap_parameters', array(
+			'classmap'           => $this->classmap,
+			'cache_wsdl'         => WSDL_CACHE_BOTH,
+			'connection_timeout' => 45,
+			'user_agent'         => 'Mozilla', // the request fails unless a (dummy) user agent is specified
+		) );
+
 		if ( null === $this->soapclient ) {
 			try {
 				$this->soapclient = new SoapClient(
 					$this->wsdl,
-					array(
-						'classmap'           => $this->classmap,
-						'cache_wsdl'         => WSDL_CACHE_BOTH,
-						'connection_timeout' => 5,
-						'user_agent'         => 'Mozilla', // the request fails unless a (dummy) user agent is specified
-					)
+					$soap_parameters
 				);
 			} catch ( Exception $e ) {
 				return false;
 			}
 		}
+
 		return $this->soapclient;
+
 	}
 }
 
