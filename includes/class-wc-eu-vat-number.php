@@ -414,7 +414,7 @@ class WC_EU_VAT_Number {
 		}
 
 		if ( in_array( $form_data['billing_country'], self::get_eu_countries() ) && ! empty( $form_data['vat_number'] ) ) {
-			$shipping_country = ! empty( $form_data['shipping_country'] ) ? $form_data['shipping_country'] : '';
+			$shipping_country = wc_clean( ! empty( $form_data['shipping_country'] ) && ! empty( $form_data['ship_to_different_address'] ) ? $form_data['shipping_country'] : $form_data['billing_country'] );
 
 			self::validate( wc_clean( $form_data['vat_number'] ), $form_data['billing_country'] );
 
