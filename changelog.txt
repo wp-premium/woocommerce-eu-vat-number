@@ -1,5 +1,8 @@
 *** EU VAT Number Changelog ***
 
+2018-08-02 - version 2.3.8
+* Fix - Properly handle shipping address depending on 'Ship to different address' checked or not.
+
 2018-05-22 - version 2.3.7
 * Fix    - PHP deprecation notice for 'parse_str'.
 * Fix    - Increasing timeout for SOAP requests.
