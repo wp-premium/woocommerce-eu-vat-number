@@ -1,5 +1,8 @@
 *** EU VAT Number Changelog ***
 
+2018-08-20 - version 2.3.9
+* Fix - VAT numbers were removed when order is saved.
+
 2018-08-02 - version 2.3.8
 * Fix - Properly handle shipping address depending on 'Ship to different address' checked or not.
 
