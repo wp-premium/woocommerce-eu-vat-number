@@ -45,7 +45,7 @@ class WC_EU_VAT_Admin {
 		$fields['vat_number'] = array(
 			'label' => __( 'VAT Number', 'woocommerce-eu-vat-number' ),
 			'show'  => false,
-			'id'    => '_vat_number',
+			'id'    => '_billing_vat_number',
 		);
 		return $fields;
 	}
