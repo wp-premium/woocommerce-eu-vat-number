@@ -42,10 +42,23 @@ class WC_EU_VAT_Admin {
 	 * @return array
 	 */
 	public static function admin_billing_fields( $fields ) {
+		global $theorder;
+
+		$vat_number = '';
+
+		if ( is_object( $theorder ) ) {
+			$vat_number = get_post_meta( $theorder->get_id(), '_vat_number', true );
+
+			if ( empty( $vat_number ) ) {
+				$vat_number = get_post_meta( $theorder->get_id(), '_billing_vat_number', true );
+			}
+		}
+
 		$fields['vat_number'] = array(
 			'label' => __( 'VAT Number', 'woocommerce-eu-vat-number' ),
 			'show'  => false,
-			'id'    => '_billing_vat_number',
+			'id'    => '_vat_number',
+			'value' => $vat_number,
 		);
 		return $fields;
 	}
