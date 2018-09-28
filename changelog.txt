@@ -1,6 +1,12 @@
 *** EU VAT Number Changelog ***
 
-2018-08-20 - version 2.3.9
+2018-09-26 - version 2.3.11
+* Update - WC tested up to 3.5
+
+2018-08-21 - version 2.3.10
+* Fix - Re-deployment to fix VAT numbers being removed when order is saved.
+
+2018-08-21 - version 2.3.9
 * Fix - VAT numbers were removed when order is saved.
 
 2018-08-02 - version 2.3.8
