@@ -149,8 +149,10 @@ class WC_EU_VAT_Number {
 	 * @version 2.3.1
 	 */
 	public static function vat_number_field() {
-		// If order total is zero (free), don't need to proceed.
-		if ( ! WC()->cart->needs_payment() ) {
+		$b2b_vat_enabled = get_option( 'woocommerce_eu_vat_number_b2b', 'no' );
+
+		// If order total is zero (free) and not b2b, don't need to proceed.
+		if ( ! WC()->cart->needs_payment() && 'no' === $b2b_vat_enabled ) {
 			return;
 		}
 
@@ -308,7 +310,7 @@ class WC_EU_VAT_Number {
 		$shipping_country = wc_clean( ! empty( $_POST['shipping_country'] ) && ! empty( $_POST['ship_to_different_address'] ) ? $_POST['shipping_country'] : $_POST['billing_country'] );
 
 		if ( in_array( $billing_country, self::get_eu_countries() ) && 'yes' === get_option( 'woocommerce_eu_vat_number_b2b', 'no' ) && empty( $_POST['vat_number'] ) ) {
-			wc_add_notice( __( 'Please enter your VAT Number.', 'woocommerce-eu-vat-number' ), 'error' );
+			wc_add_notice( __( 'Please enter your <strong>VAT Number</strong>.', 'woocommerce-eu-vat-number' ), 'error' );
 		}
 
 		// B2B.
