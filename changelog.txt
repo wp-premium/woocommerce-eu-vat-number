@@ -1,5 +1,8 @@
 *** EU VAT Number Changelog ***
 
+2019-04-16 - version 2.3.13
+* Tweak - WC 3.6 compatibility.
+
 2019-01-07 - version 2.3.12
 * Fix - Always show VAT number field if b2b is enabled.
 
