@@ -25,7 +25,7 @@ class WC_EU_VAT_Admin {
 	 * Constructor.
 	 */
 	public static function init() {
-		self::$settings = include( 'data/eu-vat-number-settings.php' );
+		self::$settings = require_once 'data/eu-vat-number-settings.php';
 		add_action( 'woocommerce_admin_billing_fields', array( __CLASS__, 'admin_billing_fields' ) );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ), 30 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'styles' ) );
@@ -33,6 +33,7 @@ class WC_EU_VAT_Admin {
 		add_action( 'woocommerce_update_options_tax', array( __CLASS__, 'save_admin_settings' ) );
 		add_filter( 'manage_edit-shop_order_columns', array( __CLASS__, 'add_column' ), 20 );
 		add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'show_column' ), 5, 2 );
+		add_action( 'woocommerce_order_before_calculate_taxes', array( __CLASS__, 'admin_order' ), 10, 2 );
 	}
 
 	/**
@@ -273,6 +274,61 @@ class WC_EU_VAT_Admin {
 				}
 			}
 			echo '</p>';
+		}
+	}
+
+	/**
+	 * Handles VAT when order is created/edited within admin manually.
+	 *
+	 * @since 2.3.14
+	 * @param array $args
+	 * @param object $order
+	 */
+	public static function admin_order( $args, $order ) {
+		if ( ! is_object( $order ) ) {
+			return;
+		}
+
+		/*
+		 * First try and get the billing country from the
+		 * address form (adding new order). If it is not
+		 * found, get it from the order (editing the order).
+		 */
+		$billing_country = ! empty( $_POST['_billing_country'] ) ? wc_clean( $_POST['_billing_country'] ) : $order->get_billing_country();
+
+		/*
+		 * First try and get the VAT number from the
+		 * address form (adding new order). If it is not
+		 * found, get it from the order (editing the order).
+		 */
+		$vat_number = ! empty( $_POST['_vat_number'] ) ? wc_clean( $_POST['_vat_number'] ) : $order->get_meta( '_vat_number', true );
+
+		$vat_number = WC_EU_VAT_Number::get_formatted_vat_number( $vat_number );
+		$valid      = WC_EU_VAT_Number::vat_number_is_valid( $vat_number, $billing_country );
+
+		// Allow empty input to clear VAT field.
+		if ( empty( $vat_number ) ) {
+			add_filter( 'woocommerce_order_is_vat_exempt', '__return_false' );
+			return;
+		}
+
+		$order->update_meta_data( '_vat_number_is_validated', 'true' );
+
+		try {
+			if ( is_wp_error( $valid ) ) {
+				throw new Exception( $valid->get_error_message() );
+			}
+
+			if ( ! $valid ) {
+				throw new Exception( sprintf( __( 'You have entered an invalid VAT number (%1$s) for your billing country (%2$s).', 'woocommerce-eu-vat-number' ), $vat_number, $billing_country ) );
+			}
+
+			$order->update_meta_data( '_vat_number_is_valid', 'true' );
+			add_filter( 'woocommerce_order_is_vat_exempt', '__return_true' );
+			return;
+		} catch ( Exception $e ) {
+			$order->update_meta_data( '_vat_number_is_valid', 'false' );
+			echo '<script>alert( "' . $e->getMessage() . '" )</script>';
 		}
 	}
 }
