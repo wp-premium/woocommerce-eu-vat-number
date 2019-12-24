@@ -1,5 +1,11 @@
 *** EU VAT Number Changelog ***
 
+2019-11-05 - version 2.3.16
+* Fix   - Update WC header.
+
+2019-11-05 - version 2.3.15
+* Tweak - WC 3.8 compatibility.
+
 2019-08-08 - version 2.3.14
 * Fix   - Adding/editing VAT in admin new order or edit order not updating VAT amount.
 * Tweak - WC 3.7 compatibility.
