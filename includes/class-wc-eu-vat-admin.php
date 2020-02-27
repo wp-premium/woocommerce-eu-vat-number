@@ -155,7 +155,7 @@ class WC_EU_VAT_Admin {
 						<td><?php echo esc_html( $data->vat_number ); ?></td>
 						<td><?php
 							if ( ! $data->validated ) {
-								echo '<span class="tips" data-tip="' . __( 'Validation was not possible', 'woocommerce-eu-vat-number' ) . '">?<span>';
+								echo '<span class="tips" data-tip="' . wc_sanitize_tooltip( __( 'Validation was not possible', 'woocommerce-eu-vat-number' ) ) . '">?<span>';
 							} else {
 								echo $data->valid ? '&#10004;' : '&#10008;';
 							}

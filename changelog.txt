@@ -1,5 +1,11 @@
 *** EU VAT Number Changelog ***
 
+2020-02-04 - version 2.3.18
+* Fix - Use proper escaping for attributes.
+
+2020-01-13 - version 2.3.17
+* Tweak - WC 3.9 compatibility.
+
 2019-11-05 - version 2.3.16
 * Fix   - Update WC header.
 
