@@ -34,6 +34,8 @@ class WC_EU_VAT_Admin {
 		add_filter( 'manage_edit-shop_order_columns', array( __CLASS__, 'add_column' ), 20 );
 		add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'show_column' ), 5, 2 );
 		add_action( 'woocommerce_order_before_calculate_taxes', array( __CLASS__, 'admin_order' ), 10, 2 );
+		add_filter( 'woocommerce_customer_meta_fields', array( __CLASS__, 'add_customer_meta_fields' ) );
+		add_filter( 'woocommerce_ajax_get_customer_details', array( __CLASS__, 'get_customer_details' ), 10, 3 );
 	}
 
 	/**
@@ -45,20 +47,12 @@ class WC_EU_VAT_Admin {
 	public static function admin_billing_fields( $fields ) {
 		global $theorder;
 
-		$vat_number = '';
-
-		if ( is_object( $theorder ) ) {
-			$vat_number = get_post_meta( $theorder->get_id(), '_vat_number', true );
-
-			if ( empty( $vat_number ) ) {
-				$vat_number = get_post_meta( $theorder->get_id(), '_billing_vat_number', true );
-			}
-		}
+		$vat_number = is_object( $theorder ) ? wc_eu_vat_get_vat_from_order( $theorder ) : '';
 
 		$fields['vat_number'] = array(
-			'label' => __( 'VAT Number', 'woocommerce-eu-vat-number' ),
+			'label' => get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ),
 			'show'  => false,
-			'id'    => '_vat_number',
+			'id'    => '_billing_vat_number',
 			'value' => $vat_number,
 		);
 		return $fields;
@@ -85,11 +79,7 @@ class WC_EU_VAT_Admin {
 	 * @return boolean
 	 */
 	protected static function is_eu_order( $order ) {
-		if ( version_compare( WC_VERSION, '2.7', '<' ) ) {
-			return in_array( $order->billing_country, WC_EU_VAT_Number::get_eu_countries() );
-		} else {
-			return in_array( $order->get_billing_country(), WC_EU_VAT_Number::get_eu_countries() );
-		}
+		return in_array( $order->get_billing_country(), WC_EU_VAT_Number::get_eu_countries() );
 	}
 
 	/**
@@ -101,7 +91,7 @@ class WC_EU_VAT_Admin {
 	protected static function get_order_vat_data( $order ) {
 		if ( version_compare( WC_VERSION, '2.7', '<' ) ) {
 			return (object) array(
-				'vat_number'      => get_post_meta( $order->id, '_vat_number', true ),
+				'vat_number'      => wc_eu_vat_get_vat_from_order( $order ),
 				'valid'           => 'true' === get_post_meta( $order->id, '_vat_number_is_valid', true ),
 				'validated'       => 'true' === get_post_meta( $order->id, '_vat_number_is_validated', true ),
 				'billing_country' => $order->billing_country,
@@ -111,7 +101,7 @@ class WC_EU_VAT_Admin {
 			);
 		} else {
 			return (object) array(
-				'vat_number'      => $order->get_meta( '_vat_number', true ),
+				'vat_number'      => wc_eu_vat_get_vat_from_order( $order ),
 				'valid'           => wc_string_to_bool( $order->get_meta( '_vat_number_is_valid', true ) ),
 				'validated'       => wc_string_to_bool( $order->get_meta( '_vat_number_is_validated', true ) ),
 				'billing_country' => $order->get_billing_country(),
@@ -132,7 +122,7 @@ class WC_EU_VAT_Admin {
 			$theorder = wc_get_order( $post->ID );
 		}
 
-		// We only need this box for EU orders
+		// We only need this box for EU orders.
 		if ( ! self::is_eu_order( $theorder ) ) {
 			echo wpautop( __( 'This order is out of scope for EU VAT.', 'woocommerce-eu-vat-number' ) );
 			return;
@@ -151,7 +141,7 @@ class WC_EU_VAT_Admin {
 
 				<?php if ( $data->vat_number ) : ?>
 					<tr>
-						<th><?php _e( 'VAT ID', 'woocommerce-eu-vat-number' ); ?></th>
+						<th><?php echo get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ); ?></th>
 						<td><?php echo esc_html( $data->vat_number ); ?></td>
 						<td><?php
 							if ( ! $data->validated ) {
@@ -257,7 +247,7 @@ class WC_EU_VAT_Admin {
 					} elseif ( ! $data->validated ) {
 						esc_html_e( '(validation failed)', 'woocommerce-eu-vat-number' );
 					} else {
-						echo '<span style="color:red">&#10005;</span>';
+						echo '<span style="color:red">&#10008;</span>';
 					}
 				} else {
 					$countries = WC()->countries->get_countries();
@@ -294,20 +284,21 @@ class WC_EU_VAT_Admin {
 		 * address form (adding new order). If it is not
 		 * found, get it from the order (editing the order).
 		 */
-		$billing_country = ! empty( $_POST['_billing_country'] ) ? wc_clean( $_POST['_billing_country'] ) : $order->get_billing_country();
+		$billing_country  = ! empty( $_POST['_billing_country'] ) ? wc_clean( $_POST['_billing_country'] ) : $order->get_billing_country();
+		$shipping_country = ! empty( $_POST['_shipping_country'] ) ? wc_clean( $_POST['_shipping_country'] ) : $order->get_shipping_country();
 
 		/*
 		 * First try and get the VAT number from the
 		 * address form (adding new order). If it is not
 		 * found, get it from the order (editing the order).
 		 */
-		$vat_number = ! empty( $_POST['_vat_number'] ) ? wc_clean( $_POST['_vat_number'] ) : $order->get_meta( '_vat_number', true );
-
-		$vat_number = WC_EU_VAT_Number::get_formatted_vat_number( $vat_number );
-		$valid      = WC_EU_VAT_Number::vat_number_is_valid( $vat_number, $billing_country );
+		$vat_number         = wc_eu_vat_get_vat_from_order( $order );
+		$vat_number         = WC_EU_VAT_Number::get_formatted_vat_number( $vat_number );
+		$valid              = WC_EU_VAT_Number::vat_number_is_valid( $vat_number, $billing_country );
+		$base_country_match = WC_EU_VAT_Number::is_base_country_match( $billing_country, $shipping_country );
 
 		// Allow empty input to clear VAT field.
-		if ( empty( $vat_number ) ) {
+		if ( empty( $vat_number ) || ( 'no' === get_option( 'woocommerce_eu_vat_number_deduct_in_base', 'yes' ) && $base_country_match ) ) {
 			add_filter( 'woocommerce_order_is_vat_exempt', '__return_false' );
 			return;
 		}
@@ -320,7 +311,7 @@ class WC_EU_VAT_Admin {
 			}
 
 			if ( ! $valid ) {
-				throw new Exception( sprintf( __( 'You have entered an invalid VAT number (%1$s) for your billing country (%2$s).', 'woocommerce-eu-vat-number' ), $vat_number, $billing_country ) );
+				throw new Exception( sprintf( __( 'You have entered an invalid %1$s (%2$s) for your billing country (%3$s).', 'woocommerce-eu-vat-number' ), get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ), $vat_number, $billing_country ) );
 			}
 
 			$order->update_meta_data( '_vat_number_is_valid', 'true' );
@@ -330,6 +321,37 @@ class WC_EU_VAT_Admin {
 			$order->update_meta_data( '_vat_number_is_valid', 'false' );
 			echo '<script>alert( "' . $e->getMessage() . '" )</script>';
 		}
+	}
+
+	/**
+	 * Adds custom fields to user profile.
+	 *
+	 * @since 2.3.21
+	 * @param array $fields WC defined user fields.
+	 * @return array $fields Modified user fields.
+	 */
+	public static function add_customer_meta_fields( $fields ) {
+		$fields['billing']['fields']['vat_number'] = array(
+			'label'       => __( 'VAT number', 'woocommerce-eu-vat-number' ),
+			'description' => '',
+		);
+
+		return $fields;
+	}
+
+	/**
+	 * Return VAT information to get customer details via AJAX.
+	 *
+	 * @since 2.3.21
+	 * @param array  $data The customer's data in context.
+	 * @param object $customer The customer object in context.
+	 * @param int    $user_id The user ID in context.
+	 * @return array $data Modified user data.
+	 */
+	public static function get_customer_details( $data, $customer, $user_id ) {
+		$data['billing']['vat_number'] = get_user_meta( $user_id, 'vat_number', true );
+
+		return $data;
 	}
 }
 

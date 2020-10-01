@@ -342,10 +342,18 @@ class WC_EU_VAT_Report_EU_VAT extends WC_Admin_Report {
 						if ( ! is_object( $rate ) || ! in_array( $rate->tax_rate_country, WC_EU_VAT_Number::get_eu_countries() ) ) {
 							continue;
 						}
+
+						/*
+						 * We need to look for Greece (GR) code and
+						 * convert it to (EL) as that is the standard
+						 * country code when in VAT context. This is needed
+						 * because WC core uses (GR) as the country code.
+						 */
+						$tax_rate_country = 'GR' === $rate->tax_rate_country ? 'EL' : $rate->tax_rate_country;
 						?>
 						<tr>
 							<th scope="row"><?php echo esc_html( WC()->countries->countries[ $rate->tax_rate_country ] ); ?></th>
-							<th scope="row"><?php echo esc_html( $rate->tax_rate_country ); ?></th>
+							<th scope="row"><?php echo esc_html( $tax_rate_country ); ?></th>
 							<td><?php echo apply_filters( 'woocommerce_reports_taxes_rate', $rate->tax_rate, $rate_id, $tax_row ); ?>%</td>
 							<td class="total_row"><?php echo wc_price( $tax_row->amount ); ?></td>
 							<td class="total_row"><?php echo wc_price( $tax_row->refunded_amount * -1 ); ?></td>
