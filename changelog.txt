@@ -1,5 +1,35 @@
 *** EU VAT Number Changelog ***
 
+2020-09-30 - version 2.3.25
+* Fix   - VAT Number required when B2B not enabled.
+
+2020-09-30 - version 2.3.24
+* Fix   - Automatically populate VAT Number at checkout if saved to user profile.
+* Fix   - VAT Number showing as required for non-EU countries when switching billing country.
+* Tweak - Lower VAT Number transient expiration time from 7 days to 1 day.
+* Tweak - Improve error message when saving VAT Number on My Account if billing address is missing.
+
+2020-08-19 - version 2.3.23
+* Tweak - WordPress 5.5 compatibility.
+
+2020-07-14 - version 2.3.22
+* Fix - PHP error on checkout page if order total is zero.
+
+2020-07-01 - version 2.3.21
+* Add - VAT number field to user/customer profile.
+* Add - VAT number of a customer when adding a new order from admin.
+* Fix - VAT not validating correctly in checkout in all acceptance types.
+* Tweak - Use EL country code for Greece when showing tax reports.
+* Tweak - Treat Isle of Man the same as UK in regards to tax exemption.
+
+2020-06-10 - version 2.3.20
+* Tweak - WC 4.2 compatibility.
+
+2020-04-29 - version 2.3.19
+* Tweak - Remove legacy code.
+* Tweak - WC 4.0 compatibility.
+* Fix   - VAT incorrectly being removed when Recalculate button is clicked on the order.
+
 2020-02-04 - version 2.3.18
 * Fix - Use proper escaping for attributes.
 

@@ -122,7 +122,7 @@ class WC_EU_VAT_My_Account {
 		$is_endpoint = isset( $wp_query->query_vars[ $this->endpoint ] );
 
 		if ( $is_endpoint && ! is_admin() && is_main_query() && in_the_loop() && is_account_page() ) {
-			$title = __( 'VAT Number', 'woocommerce-eu-vat-number' );
+			$title = get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' );
 
 			remove_filter( 'the_title', array( $this, 'endpoint_title' ) );
 		}
@@ -144,7 +144,7 @@ class WC_EU_VAT_My_Account {
 		unset( $items['customer-logout'] );
 
 		// Insert VAT Number.
-		$items[ $this->endpoint ] = __( 'VAT Number', 'woocommerce-eu-vat-number' );
+		$items[ $this->endpoint ] = get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' );
 
 		// Insert back logout item.
 		$items['customer-logout'] = $logout;
@@ -201,19 +201,25 @@ class WC_EU_VAT_My_Account {
 	 */
 	public function validate( $vat_number, $billing_country ) {
 		$vat_number = WC_EU_VAT_Number::get_formatted_vat_number( wc_clean( $vat_number ) );
-		$valid      = WC_EU_VAT_Number::vat_number_is_valid( $vat_number, wc_clean( $billing_country ) );
 
 		// Allow empty input to clear VAT field.
 		if ( empty( $vat_number ) ) {
 			return true;
 		}
 
+		if ( empty( $billing_country ) ) {
+			/* translators: 1: VAT Number */
+			throw new Exception( sprintf( __( '%1$s can not be validated because the billing country is missing. Please update your billing address.', 'woocommerce-eu-vat-number' ), '<strong>' . get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ) . '</strong>' ) );
+		}
+
+		$valid = WC_EU_VAT_Number::vat_number_is_valid( $vat_number, wc_clean( $billing_country ) );
+
 		if ( is_wp_error( $valid ) ) {
 			throw new Exception( $valid->get_error_message() );
 		}
 
 		if ( ! $valid ) {
-			throw new Exception( sprintf( __( 'You have entered an invalid VAT number (%1$s) for your billing country (%2$s).', 'woocommerce-eu-vat-number' ), $vat_number, $billing_country ) );
+			throw new Exception( sprintf( __( 'You have entered an invalid %1$s (%2$s) for your billing country (%3$s).', 'woocommerce-eu-vat-number' ), get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ), $vat_number, $billing_country ) );
 		}
 
 		return true;

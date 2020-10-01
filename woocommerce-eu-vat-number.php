@@ -3,15 +3,15 @@
  * Plugin Name: WooCommerce EU VAT Number
  * Plugin URI: https://woocommerce.com/products/eu-vat-number/
  * Description: The EU VAT Number extension lets you collect and validate EU VAT numbers during checkout to identify B2B transactions verses B2C. IP Addresses can also be validated to ensure they match the billing address. EU businesses with a valid VAT number can have their VAT removed prior to payment.
- * Version: 2.3.18
+ * Version: 2.3.25
  * Author: WooCommerce
  * Author URI: https://woocommerce.com/
  * Text Domain: woocommerce-eu-vat-number
  * Domain Path: /languages
  * Requires at least: 4.4
- * Tested up to: 5.3
+ * Tested up to: 5.5
  * WC requires at least: 2.6
- * WC tested up to: 3.9
+ * WC tested up to: 4.2
  *
  * Copyright: © 2020 WooCommerce
  * License: GNU General Public License v3.0
@@ -21,11 +21,9 @@
  * Woo: 18592:d2720c4b4bb8d6908e530355b7a2d734
  */
 
-if ( ! function_exists( 'woothemes_queue_update' ) ) {
-	require_once( 'woo-includes/woo-functions.php' );
-}
+// phpcs:disable WordPress.Files.FileName
 
-define( 'WC_EU_VAT_VERSION', '2.3.18' ); // WRCS: DEFINED_VERSION.
+define( 'WC_EU_VAT_VERSION', '2.3.25' ); // WRCS: DEFINED_VERSION.
 define( 'WC_EU_VAT_FILE', __FILE__ );
 define( 'WC_EU_VAT_PLUGIN_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
 
@@ -59,7 +57,7 @@ class WC_EU_VAT_Number_Init {
 	 */
 	private function check_dependencies() {
 		$dependencies = array(
-			'wc_installed' => array(
+			'wc_installed'       => array(
 				'callback'        => array( $this, 'is_woocommerce_active' ),
 				'notice_callback' => array( $this, 'woocommerce_inactive_notice' ),
 			),
@@ -67,7 +65,7 @@ class WC_EU_VAT_Number_Init {
 				'callback'        => array( $this, 'is_woocommerce_version_supported' ),
 				'notice_callback' => array( $this, 'woocommerce_wrong_version_notice' ),
 			),
-			'soap_required' => array(
+			'soap_required'      => array(
 				'callback'        => array( $this, 'is_soap_supported' ),
 				'notice_callback' => array( $this, 'requires_soap_notice' ),
 			),
@@ -102,7 +100,7 @@ class WC_EU_VAT_Number_Init {
 	public function is_woocommerce_version_supported() {
 		return version_compare(
 			get_option( 'woocommerce_db_version' ),
-			WC_EU_VAT_Number_Init::WC_MIN_VERSION,
+			self::WC_MIN_VERSION,
 			'>='
 		);
 	}
@@ -124,6 +122,7 @@ class WC_EU_VAT_Number_Init {
 	 */
 	public function woocommerce_inactive_notice() {
 		if ( current_user_can( 'activate_plugins' ) ) {
+			/* translators: %1$s: Plugin page link start %2$s Link end */
 			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be active for EU VAT Number to work. %1$sPlease install and activate WooCommerce%2$s.', 'woocommerce-eu-vat-number' ), '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
 		}
 	}
@@ -135,7 +134,8 @@ class WC_EU_VAT_Number_Init {
 	 */
 	public function woocommerce_wrong_version_notice() {
 		if ( current_user_can( 'activate_plugins' ) ) {
-			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be at least version %s for EU VAT Number to work. %2$sPlease upgrade WooCommerce%3$s.', 'woocommerce-eu-vat-number' ), WC_EU_VAT_Number_Init::WC_MIN_VERSION, '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
+			/* translators: %1$s: Minimum version %2$s: Plugin page link start %3$s Link end */
+			echo '<div class="error"><p><strong>' . wp_kses_post( __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . sprintf( __( 'The WooCommerce plugin must be at least version %1$s for EU VAT Number to work. %2$sPlease upgrade WooCommerce%3$s.', 'woocommerce-eu-vat-number' ), self::WC_MIN_VERSION, '<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">', '</a>' ) ) . '</p></div>';
 		}
 	}
 
@@ -146,7 +146,7 @@ class WC_EU_VAT_Number_Init {
 	 */
 	public function requires_soap_notice() {
 		if ( current_user_can( 'activate_plugins' ) ) {
-			echo '<div class="error"><p><strong>' . __( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . __( 'Your server does not provide SOAP support which is required functionality for communicating with VIES. You will need to reach out to your web hosting provider to get information on how to enable this functionality on your server.', 'woocommerce-eu-vat-number' ) . '</p></div>';
+			echo '<div class="error"><p><strong>' . esc_html__( 'WooCommerce EU VAT Number is inactive.', 'woocommerce-eu-vat-number' ) . '</strong> ' . esc_html__( 'Your server does not provide SOAP support which is required functionality for communicating with VIES. You will need to reach out to your web hosting provider to get information on how to enable this functionality on your server.', 'woocommerce-eu-vat-number' ) . '</p></div>';
 		}
 	}
 
@@ -154,23 +154,22 @@ class WC_EU_VAT_Number_Init {
 	 * Init the plugin once WP is loaded.
 	 */
 	public function init() {
-		woothemes_queue_update( plugin_basename( __FILE__ ), 'd2720c4b4bb8d6908e530355b7a2d734', '18592' );
-
 		if ( $this->check_dependencies() ) {
 			if ( version_compare( get_option( 'woocommerce_eu_vat_version', 0 ), WC_EU_VAT_VERSION, '<' ) ) {
 				add_action( 'init', array( $this, 'install' ) );
 			}
 
-			include_once( 'includes/class-wc-eu-vat-privacy.php' );
+			include_once __DIR__ . '/includes/wc-eu-vat-functions.php';
+			include_once __DIR__ . '/includes/class-wc-eu-vat-privacy.php';
 
 			if ( ! class_exists( 'WC_EU_VAT_Number' ) ) {
-				include_once( 'includes/class-wc-eu-vat-number.php' );
-				include_once( 'includes/class-wc-eu-vat-my-account.php' );
+				include_once __DIR__ . '/includes/class-wc-eu-vat-number.php';
+				include_once __DIR__ . '/includes/class-wc-eu-vat-my-account.php';
 			}
 
 			if ( is_admin() ) {
-				include_once( 'includes/class-wc-eu-vat-admin.php' );
-				include_once( 'includes/class-wc-eu-vat-reports.php' );
+				include_once __DIR__ . '/includes/class-wc-eu-vat-admin.php';
+				include_once __DIR__ . '/includes/class-wc-eu-vat-reports.php';
 			}
 		}
 	}
@@ -197,8 +196,8 @@ class WC_EU_VAT_Number_Init {
 	/**
 	 * Add custom action links on the plugin screen.
 	 *
-	 * @param	mixed $actions Plugin Actions Links.
-	 * @return	array
+	 * @param  mixed $actions Plugin Actions Links.
+	 * @return array
 	 */
 	public function plugin_action_links( $actions ) {
 		$custom_actions = array(
@@ -210,16 +209,16 @@ class WC_EU_VAT_Number_Init {
 	/**
 	 * Show row meta on the plugin screen.
 	 *
-	 * @param	mixed $links Plugin Row Meta.
-	 * @param	mixed $file  Plugin Base file.
-	 * @return	array
+	 * @param  mixed $links Plugin Row Meta.
+	 * @param  mixed $file  Plugin Base file.
+	 * @return array
 	 */
 	public function plugin_row_meta( $links, $file ) {
 		if ( 'woocommerce-eu-vat-number/woocommerce-eu-vat-number.php' === $file ) {
 			$row_meta = array(
-				'docs'      => '<a href="' . esc_url( apply_filters( 'wc_eu_vat_number_docs_url', 'http://docs.woothemes.com/document/eu-vat-number-2/' ) ) . '" title="' . esc_attr( __( 'View Plugin Documentation', 'woocommerce-eu-vat-number' ) ) . '">' . __( 'Docs', 'woocommerce-eu-vat-number' ) . '</a>',
-				'changelog' => '<a href="' . esc_url( apply_filters( 'wc_eu_vat_number_changelog', 'http://www.woothemes.com/changelogs/extensions/woocommerce-eu-vat-number/changelog.txt' ) ) . '" title="' . esc_attr( __( 'View Plugin Changelog', 'woocommerce-eu-vat-number' ) ) . '">' . __( 'Changelog', 'woocommerce-eu-vat-number' ) . '</a>',
-				'support'   => '<a href="' . esc_url( apply_filters( 'wc_eu_vat_number_support_url', 'http://support.woothemes.com/' ) ) . '" title="' . esc_attr( __( 'Support', 'woocommerce-eu-vat-number' ) ) . '">' . __( 'Support', 'woocommerce-eu-vat-number' ) . '</a>',
+				'docs'      => '<a href="' . esc_url( apply_filters( 'wc_eu_vat_number_docs_url', 'https://docs.woocommerce.com/document/eu-vat-number-2/' ) ) . '" title="' . esc_attr( __( 'View Plugin Documentation', 'woocommerce-eu-vat-number' ) ) . '">' . __( 'Docs', 'woocommerce-eu-vat-number' ) . '</a>',
+				'changelog' => '<a href="' . esc_url( apply_filters( 'wc_eu_vat_number_changelog', 'https://woocommerce.com/changelogs/woocommerce-eu-vat-number/changelog.txt' ) ) . '" title="' . esc_attr( __( 'View Plugin Changelog', 'woocommerce-eu-vat-number' ) ) . '">' . __( 'Changelog', 'woocommerce-eu-vat-number' ) . '</a>',
+				'support'   => '<a href="' . esc_url( apply_filters( 'wc_eu_vat_number_support_url', 'https://support.woocommerce.com/' ) ) . '" title="' . esc_attr( __( 'Support', 'woocommerce-eu-vat-number' ) ) . '">' . __( 'Support', 'woocommerce-eu-vat-number' ) . '</a>',
 			);
 			return array_merge( $links, $row_meta );
 		}
@@ -227,4 +226,4 @@ class WC_EU_VAT_Number_Init {
 	}
 }
 
-new WC_EU_VAT_Number_Init;
+new WC_EU_VAT_Number_Init();
