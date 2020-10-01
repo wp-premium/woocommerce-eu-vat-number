@@ -110,53 +110,96 @@ class WC_EU_VAT_Report_EC_Sales_List extends WC_Admin_Report {
 	 * @return string
 	 */
 	public function get_main_chart() {
-		$ec_sales = $this->get_order_report_data( array(
+		$ec_sales1 = $this->get_order_report_data( array(
 			'data' => array(
 				'_order_total' => array(
 					'type'     => 'meta',
 					'function' => 'SUM',
-					'name'     => 'total_sales'
+					'name'     => 'total_sales',
 				),
-				'_vat_number' => array(
+				'_billing_vat_number' => array(
 					'type'     => 'meta',
 					'function' => '',
-					'name'     => '_vat_number'
+					'name'     => '_billing_vat_number',
 				),
 				'_billing_country' => array(
 					'type'     => 'meta',
 					'function' => '',
-					'name'     => '_billing_country'
+					'name'     => '_billing_country',
 				),
 				'_order_currency' => array(
 					'type'     => 'meta',
 					'function' => '',
-					'name'     => '_order_currency'
-				)
+					'name'     => '_order_currency',
+				),
 			),
 			'where' => array(
 				array(
 					'key'      => 'meta__billing_country.meta_value',
 					'value'    => WC_EU_VAT_Number::get_eu_countries(),
-					'operator' => 'in'
+					'operator' => 'in',
+				),
+				array(
+					'key'      => 'meta__billing_vat_number.meta_value',
+					'value'    => '',
+					'operator' => '!=',
+				),
+			),
+			'group_by'     => '_billing_vat_number',
+			'order_by'     => '_billing_vat_number ASC',
+			'query_type'   => 'get_results',
+			'order_status' => array( 'completed' ),
+			'filter_range' => true,
+		) );
+		$ec_sales2 = $this->get_order_report_data( array(
+			'data' => array(
+				'_order_total' => array(
+					'type'     => 'meta',
+					'function' => 'SUM',
+					'name'     => 'total_sales',
+				),
+				'_vat_number' => array(
+					'type'     => 'meta',
+					'function' => '',
+					'name'     => '_vat_number',
+				),
+				'_billing_country' => array(
+					'type'     => 'meta',
+					'function' => '',
+					'name'     => '_billing_country',
+				),
+				'_order_currency' => array(
+					'type'     => 'meta',
+					'function' => '',
+					'name'     => '_order_currency',
+				),
+			),
+			'where' => array(
+				array(
+					'key'      => 'meta__billing_country.meta_value',
+					'value'    => WC_EU_VAT_Number::get_eu_countries(),
+					'operator' => 'in',
 				),
 				array(
 					'key'      => 'meta__vat_number.meta_value',
 					'value'    => '',
-					'operator' => '!='
-				)
+					'operator' => '!=',
+				),
 			),
 			'group_by'     => '_vat_number',
 			'order_by'     => '_vat_number ASC',
 			'query_type'   => 'get_results',
 			'order_status' => array( 'completed' ),
-			'filter_range' => true
+			'filter_range' => true,
 		) );
+
+		$ec_sales = array_merge( $ec_sales1, $ec_sales2 );
 		?>
 		<table class="widefat">
 			<thead>
 				<tr>
 					<th><?php _e( 'Country', 'woocommerce-eu-vat-number' ); ?></th>
-					<th><?php _e( 'VAT ID', 'woocommerce-eu-vat-number' ); ?></th>
+					<th><?php echo get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ); ?></th>
 					<th class="total_row"><?php _e( 'Value', 'woocommerce-eu-vat-number' ); ?></th>
 				</tr>
 			</thead>
@@ -164,10 +207,11 @@ class WC_EU_VAT_Report_EC_Sales_List extends WC_Admin_Report {
 				<tbody>
 					<?php
 					foreach ( $ec_sales as $ec_sale ) {
+						$vat_number = ! empty( $ec_sale->_billing_vat_number ) ? $ec_sale->_billing_vat_number : $ec_sale->_vat_number;
 						?>
 						<tr>
 							<th scope="row"><?php echo esc_html( $ec_sale->_billing_country ); ?></th>
-							<th scope="row"><?php echo esc_html( str_replace( $ec_sale->_billing_country, '', $ec_sale->_vat_number ) ); ?></th>
+							<th scope="row"><?php echo esc_html( str_replace( $ec_sale->_billing_country, '', $vat_number ) ); ?></th>
 							<th scope="row"><?php echo wc_price( $ec_sale->total_sales, array( 'currency', $ec_sale->_order_currency ) ); ?></th>
 						</tr>
 						<?php

@@ -79,12 +79,12 @@ class WC_EU_VAT_Privacy extends WC_Abstract_Privacy {
 							'value' => get_post_meta( $order->get_id(), '_vat_number', true ),
 						),
 						array(
-							'name'  => __( 'EU VAT country', 'woocommerce-eu-vat-number' ),
-							'value' => get_post_meta( $order->get_id(), '_customer_ip_country', true ),
+							'name'  => __( 'EU Billing VAT number', 'woocommerce-eu-vat-number' ),
+							'value' => get_post_meta( $order->get_id(), '_billing_vat_number', true ),
 						),
 						array(
-							'name'  => __( 'EU VAT self-declared country', 'woocommerce-eu-vat-number' ),
-							'value' => get_post_meta( $order->get_id(), '_customer_self_declared_country', true ),
+							'name'  => __( 'EU VAT country', 'woocommerce-eu-vat-number' ),
+							'value' => get_post_meta( $order->get_id(), '_customer_ip_country', true ),
 						),
 					),
 				);
@@ -118,7 +118,7 @@ class WC_EU_VAT_Privacy extends WC_Abstract_Privacy {
 				'item_id'     => 'user',
 				'data'        => array(
 					array(
-						'name'  => __( 'VAT number', 'woocommerce-eu-vat-number' ),
+						'name'  => get_option( 'woocommerce_eu_vat_number_field_label', 'VAT number' ),
 						'value' => get_user_meta( $user->ID, 'vat_number', true ),
 					),
 				),
@@ -206,17 +206,17 @@ class WC_EU_VAT_Privacy extends WC_Abstract_Privacy {
 	protected function maybe_handle_order( $order ) {
 		$order_id           = $order->get_id();
 
-		$vat_number      = get_post_meta( $order_id, '_vat_number', true );
-		$ip_country      = get_post_meta( $order_id, '_customer_ip_country', true );
-		$self_ip_country = get_post_meta( $order_id, '_customer_self_declared_country', true );
+		$billing_vat_number = get_post_meta( $order_id, '_billing_vat_number', true );
+		$vat_number         = get_post_meta( $order_id, '_vat_number', true );
+		$ip_country         = get_post_meta( $order_id, '_customer_ip_country', true );
 
-		if ( empty( $vat_number ) && empty( $ip_country ) && empty( $self_ip_country ) ) {
+		if ( empty( $vat_number ) && empty( $ip_country ) ) {
 			return array( false, false, array() );
 		}
 
+		delete_post_meta( $order_id, '_billing_vat_number' );
 		delete_post_meta( $order_id, '_vat_number' );
 		delete_post_meta( $order_id, '_customer_ip_country' );
-		delete_post_meta( $order_id, '_customer_self_declared_country' );
 
 		return array( true, false, array( __( 'EU VAT Order Data Erased.', 'woocommerce-eu-vat-number' ) ) );
 	}
